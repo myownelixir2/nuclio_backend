@@ -1,0 +1,349 @@
+scale_name;key;notes
+major;C Major;0, 2, 4, 5, 7, 9, 11, 0
+major;D Major;2, 4, 6, 7, 9, 11, 1, 2
+major;E Major;4, 6, 8, 9, 11, 1, 3, 4
+major;F Major;5, 7, 9, 10, 0, 2, 4, 5
+major;G Major;7, 9, 11, 0, 2, 4, 6, 7
+major;A Major;9, 11, 1, 2, 4, 6, 8, 9
+major;B Major;11, 1, 3, 4, 6, 8, 10, 11
+major;C# / Db Major;1, 3, 5, 6, 8, 10, 0, 1
+major;D# / Eb Major;3, 5, 7, 8, 10, 0, 2, 3
+major;F# /Gb Major;6, 8, 10, 11, 1, 3, 5, 6
+major;G# / Ab Major;8, 10, 0, 1, 3, 5, 7, 8
+major;A# / Bb Major;10, 0, 2, 3, 5, 7, 9, 10
+minor;A Minor;9, 11, 0, 2, 4, 5, 7, 9
+minor;A# / Bb Minor;10, 0, 1, 3, 5, 6, 8, 10
+minor;B Minor;11, 1, 2, 4, 6, 7, 9, 11
+minor;C Minor;0, 2, 3, 5, 7, 8, 10, 0
+minor;C# / Db Minor;1, 3, 4,  6, 8, 9, 11, 1
+minor;D Minor;2, 4, 5, 7, 9, 10, 0, 2
+minor;D# / Eb Minor;3, 5, 6,  8, 10, 11, 1, 3
+minor;E Minor;4,  6, 7, 9, 11, 0, 2, 4
+minor;F Minor;5, 7, 8, 10, 0, 1, 3, 5
+minor;F# / Gb Minor;6, 8, 9,  11, 1, 2, 4, 6
+minor;G Minor;7, 9, 10, 0, 2, 3, 5, 7
+minor;G# / Ab Minor;8, 10, 11, 1, 3, 4, 6, 8
+blues;Cm Pentatonic Blues;0, 3, 5, 6, 7, 10, 0
+blues;C#m / Dbm Pentatonic Blues;1, 4, 6, 7, 8, 11, 1
+blues;Dm Pentatonic Blues;2, 5, 7, 8, 9, 0, 2
+blues;D#m / Ebm Pentatonic Blues;3, 6, 8, 9, 10, 1, 3
+blues;Em Pentatonic Blues;4, 7, 9, 10, 11, 2, 4
+blues;Fm Pentatonic Blues;5, 8, 10, 11, 0, 3, 5
+blues;F#m / Gbm Pentatonic Blues;6, 9, 11, 0, 1, 4, 6
+blues;Gm Pentatonic Blues;7, 10, 0, 1, 2, 5, 7
+blues;G#m / Abm Pentatonic Blues;8, 11, 1, 2, 3, 6, 8
+blues;Am Pentatonic Blues;9, 0, 2, 3, 4, 7, 9
+blues;A#m / Bbm Pentatonic Blues;10, 1, 3, 4, 5, 8, 10
+blues;Bm Pentatonic Blues;11, 2, 4, 5, 6, 9, 11 
+pentatonic;Cm ;0, 3, 5, 7, 10, 0
+pentatonic;C#m / Dbm;1, 4, 6, 8, 11, 1
+pentatonic;Dm ;2, 5, 7, 9, 0, 2 
+pentatonic;D#m / Ebm;3, 6, 8, 10, 1, 3
+pentatonic;Em;4, 7, 9, 11, 2, 4
+pentatonic;Fm;5, 8, 10, 0, 3, 5
+pentatonic;F#m / Gbm;6, 9, 11, 1, 4, 6
+pentatonic;Gm;7, 10, 0, 2, 5, 7
+pentatonic;G#m / Abm;8, 11, 1, 3, 6, 8
+pentatonic;Am;9, 0, 2, 4, 7, 9
+pentatonic;A#m / Bbm;10, 1, 3, 5, 8, 10
+pentatonic;Bm;11, 2, 4, 6, 9, 11
+algerian;C;0, 2, 3, 5, 6, 7, 8, 11, 0
+algerian;C# / Db;1, 3, 4, 6, 7, 8, 9, 0, 1
+algerian;D;2, 4, 5, 7, 8, 9, 10, 1, 2
+algerian;D# /Eb;3, 5, 6, 8, 9, 10, 11, 2, 3
+algerian;E;4, 6, 7, 9, 10, 11, 0, 3, 4
+algerian;F;5, 7, 8, 10, 11, 0, 1, 4, 5
+algerian;F# / Gb;6, 8, 9, 11, 0, 1, 2, 5, 6
+algerian;G;7, 9, 10, 0, 1, 2, 3, 6, 7
+algerian;G# / Ab;8, 10, 11, 1, 2, 3, 4, 7, 8
+algerian;A;9, 11, 0, 2, 3, 4, 5, 8, 9
+algerian;A# / Bb;10, 0, 1, 3, 4, 5, 6, 9, 10
+algerian;B;11, 1, 2, 4, 5, 6, 7, 10, 11
+arabic;C;0, 2, 4, 5, 6, 8, 10, 0
+arabic;C# / Db;1, 3, 5, 6, 7, 9, 11, 1
+arabic;D;2, 4, 6, 7, 8, 10, 0, 2
+arabic;D# /Eb;3, 5, 7, 8, 9, 11, 1, 3
+arabic;E;4, 6, 8, 9, 10, 0, 2, 4
+arabic;F;5, 7, 9, 10, 11, 1, 3, 5
+arabic;F# / Gb;6, 8, 10, 11, 0, 2, 4, 6
+arabic;G;7, 9, 11, 0, 1, 3, 5, 7
+arabic;G# / Ab;8, 10, 0, 1, 2, 4, 6, 8
+arabic;A;9, 11, 1, 2, 3, 5, 7, 9
+arabic;A# / Bb;10, 0, 2, 3, 4, 6, 8, 10
+arabic;B;11, 1, 3, 4, 5, 7, 9, 11
+augmented;C;0, 3, 4, 7, 8,  11, 0
+augmented;C# / Db;1,  4,  5,  8, 9, 0, 1
+augmented;D;2,  5, 6, 9, 10, 1,   2
+augmented;D# /Eb;3, 6, 7, 10, 11,  2, 3
+augmented;E;4,  7, 8, 11, 0,  3, 4
+augmented;F;5, 8, 9,   0,  1, 4, 5
+augmented;F# / Gb;6,  9, 10, 1, 2,  5, 6
+augmented;G;7, 10, 11,  2,  3, 6, 7
+augmented;G# / Ab;8,  11, 0, 3, 4,  7, 8
+augmented;A;9,  0, 1, 4, 5,  8, 9
+augmented;A# / Bb;10, 1, 2, 5,  6,  9, 10
+augmented;B;11,  2, 3, 6, 7, 10,  11
+balinese;C;0, 1, 3,  7, 8, 0
+balinese;C# / Db;1, 2, 4,  8, 9,  1
+balinese;D;2, 3, 5,  9, 10, 2
+balinese;D# /Eb;3, 4, 6,  10, 11, 3
+balinese;E;4, 5, 7, 9, 0, 4
+balinese;F;5, 6, 8,  0, 1, 5
+balinese;F# / Gb;6, 7, 9, 1, 2, 6
+balinese;G;7, 8, 10,  2, 3, 7
+balinese;G# / Ab;8, 9, 11,  3, 4,  8
+balinese;A;9, 10, 0, 4, 5,  9
+balinese;A# / Bb;10, 11, 1, 5, 6, 10
+balinese;B;11, 0, 2,  6, 7, 11
+byzantine;C;0, 1, 4, 5, 7, 8, 11, 0
+byzantine;C# / Db;1, 2, 5, 6, 8, 9, 0, 1
+byzantine;D;2, 3, 6, 7, 9, 10, 1, 2
+byzantine;D# /Eb;3, 4, 7, 8, 10, 11, 2, 3 
+byzantine;E;4, 5, 8, 9, 11, 0, 3, 4
+byzantine;F;5, 6, 9, 10, 0, 1, 4, 5
+byzantine;F# / Gb;6, 7, 10, 11, 1, 2, 5, 6
+byzantine;G;7, 8, 11, 0, 2, 3, 6, 7
+byzantine;G# / Ab;8, 9, 0, 1, 3, 4, 7, 8
+byzantine;A;9, 10, 1, 2, 4, 5, 8, 9
+byzantine;A# / Bb;10, 11, 2, 3, 5, 6, 9, 10 
+byzantine;B;11, 0, 3, 4, 6, 7, 10, 11
+chinese;C;0, 4, 6, 7, 11, 0
+chinese;C# / Db;1, 5, 7, 8, 0, 1
+chinese;D;2, 6, 8, 9, 1, 2
+chinese;D# /Eb;3, 7, 9, 10, 2, 3
+chinese;E;4, 8, 10, 11, 3, 4
+chinese;F;5, 9, 11, 0, 4, 5
+chinese;F# / Gb;6, 10, 0, 1, 5, 6
+chinese;G;7, 11, 1, 2, 6, 7
+chinese;G# / Ab;8, 0, 2, 3, 7, 8
+chinese;A;9, 1, 3, 4, 8, 9
+chinese;A# / Bb;10, 2, 4, 5, 9, 10
+chinese;B;11, 3, 5, 6, 10, 11
+diminished;C;0, 2, 3, 5, 6, 8, 9, 11, 0
+diminished;C# / Db;1, 3, 4,  6, 7, 9, 10, 0, 1
+diminished;D;2, 4, 5, 7, 8, 10, 11, 1, 2
+diminished;D# /Eb;3, 5, 6, 8, 9, 11, 0, 2, 3
+diminished;E;4, 6, 7, 9, 10, 0, 1, 3, 4
+diminished;F;5, 7, 8, 10, 11, 1, 2, 4, 5
+diminished;F# / Gb;6, 8, 9, 11, 0, 2, 3, 5, 6
+diminished;G;7, 9, 10, 0, 1, 3, 4, 6, 7
+diminished;G# / Ab;8, 10, 11, 1, 2, 4, 5, 7, 8
+diminished;A;9, 11, 0, 2, 3, 5, 6, 8, 9
+diminished;A# / Bb;10, 0, 1, 3, 4,  6, 7, 9, 10
+diminished;B;11, 1, 2, 4, 5, 7, 8, 10, 11
+dominant-diminished;C;0, 1, 3, 4, 6, 7, 9, 10, 0
+dominant-diminished;C# / Db;1, 2, 4,  5, 7, 8, 10, 11, 1
+dominant-diminished;D;2, 3, 5, 6, 8, 9, 11, 0, 2
+dominant-diminished;D# /Eb;3, 4, 6, 7, 9, 10, 0, 1, 3
+dominant-diminished;E;4, 5, 7, 8, 10, 11, 1, 2, 4
+dominant-diminished;F;5, 6, 8, 9, 11, 0, 2, 3, 5
+dominant-diminished;F# / Gb;6, 7, 9, 10, 0, 1, 3, 4, 6
+dominant-diminished;G;7, 8, 10, 11, 1, 2, 4, 5, 7
+dominant-diminished;G# / Ab;8, 9, 11, 0, 2, 3, 5, 6, 8
+dominant-diminished;A;9, 10, 0, 1, 3, 4, 6, 7, 9
+dominant-diminished;A# / Bb;10, 11, 1, 2, 4,  5, 7,   10, 10
+dominant-diminished;B;11, 0, 2, 3, 5, 6, 8, 9, 11
+egyptian;C;0, 2, 5,  7, 10,  0
+egyptian;C# / Db;1, 3,  6, 8, 11, 1
+egyptian;D;2, 4,  7, 9,  0, 2
+egyptian;D# /Eb;3,  5, 8, 10,  1, 3
+egyptian;E;4, 6,  9, 11,  2, 4
+egyptian;F;5, 7, 10,  0,  3, 5
+egyptian;F# / Gb;6, 8,  11, 1, 4, 6
+egyptian;G;7, 9,  0, 2,  5, 7
+egyptian;G# / Ab;8, 10,  1, 3, 6, 8
+egyptian;A;9, 11,  2, 4,  7, 9
+egyptian;A# / Bb;10,  0, 3,  5, 8, 10
+egyptian;B;11, 1, 4, 6,  9, 11
+eight-tone-spanish;C;0, 1, 3, 4, 5, 6, 8, 10, 0
+eight-tone-spanish;C# / Db;1, 2, 4, 5, 6, 7, 9, 11, 1
+eight-tone-spanish;D;2, 3, 5, 6, 7, 8, 10, 0, 2
+eight-tone-spanish;D# /Eb;3, 4, 6, 7, 8, 9, 11, 1, 3
+eight-tone-spanish;E;4, 5, 7, 8, 9, 10, 0, 2, 4
+eight-tone-spanish;F;5, 6, 8, 9, 10, 11, 1, 3, 5
+eight-tone-spanish;F# / Gb;6, 7, 9, 10, 11, 0, 2, 4, 6
+eight-tone-spanish;G;7, 8, 10, 11, 0, 1, 3, 5, 7
+eight-tone-spanish;G# / Ab;8, 9, 11, 0, 1, 2, 4,  6, 8
+eight-tone-spanish;A;9, 10, 0, 1, 2, 3, 5, 7, 9
+eight-tone-spanish;A# / Bb;10, 11, 1, 2, 3, 4, 6, 8, 10
+eight-tone-spanish;B;11, 0, 2, 3, 4, 5, 7, 9, 11
+enigmatic;C;0, 1, 4, 6, 8, 10, 11, 0
+enigmatic;C# / Db;1, 2, 5, 7, 9, 11, 0, 1
+enigmatic;D;2, 3, 6, 8, 10, 0, 1, 2
+enigmatic;D# /Eb;3, 4, 7, 9, 11, 1, 2, 3
+enigmatic;E;4, 5, 8, 10, 0, 2, 3, 4
+enigmatic;F;5, 6, 9, 11, 1, 3, 4, 5
+enigmatic;F# / Gb;6, 7, 10, 0, 2, 4, 5, 6
+enigmatic;G;7, 8, 11, 1, 3, 5, 6, 7
+enigmatic;G# / Ab;8, 9, 0, 2, 4, 6, 7, 8
+enigmatic;A;9, 10, 1, 3, 5, 7, 8, 9
+enigmatic;A# / Bb;10, 11, 2, 4, 6, 8, 9, 10
+enigmatic;B;11, 0, 3, 5, 7, 9, 10, 11
+ethiopian-geez;C;0, 2, 3, 5, 7, 8, 10, 0
+ethiopian-geez;C# / Db;1, 3, 4, 6, 8, 9, 11, 1
+ethiopian-geez;D;2, 4, 5, 7, 9, 10, 0, 2
+ethiopian-geez;D# /Eb;3, 5, 6, 8, 10, 11, 1, 3
+ethiopian-geez;E;4, 6, 7, 9, 11, 0, 2, 4
+ethiopian-geez;F;5, 7, 8, 10, 0, 1, 3, 5
+ethiopian-geez;F# / Gb;6, 8, 9, 11, 1, 2, 4, 6
+ethiopian-geez;G;7, 9, 10, 0, 2, 3, 5, 7
+ethiopian-geez;G# / Ab;8, 10, 11, 1, 3, 4, 6, 8
+ethiopian-geez;A;9, 11, 0, 2, 4, 5, 7, 9
+ethiopian-geez;A# / Bb;10, 0, 1, 3, 5, 6, 8, 10
+ethiopian-geez;B;11, 1, 2, 4, 6, 7, 9, 11
+aeolian-dominant;C;0, 2, 4, 5, 7, 8, 10, 0
+aeolian-dominant;C# / Db;1, 3, 5, 6, 8, 9, 11, 1
+aeolian-dominant;D;2, 4, 6, 7, 9, 10, 0, 2
+aeolian-dominant;D# /Eb;3, 5, 7, 8, 10, 11, 1, 3
+aeolian-dominant;E;4, 6, 8, 9, 11, 0, 2, 4
+aeolian-dominant;F;5, 7, 9, 10, 0, 1, 3, 5
+aeolian-dominant;F# / Gb;6, 8, 10, 11, 1, 2, 4, 6
+aeolian-dominant;G;7, 9, 11, 0, 2, 3, 5, 7
+aeolian-dominant;G# / Ab;8, 10, 0, 1, 3, 4, 6, 8
+aeolian-dominant;A;9, 11, 1, 2, 4, 5, 7, 9
+aeolian-dominant;A# / Bb;10, 0, 2, 3, 5, 6, 8, 10
+aeolian-dominant;B;11, 1, 3, 4, 6, 7, 9, 11
+hirajoshi;C;0, 1,  5,  6, 10, 0
+hirajoshi;C# / Db;1, 2,  6,  7, 11, 1
+hirajoshi;D;2, 3,  7,  8, 0, 2
+hirajoshi;D# /Eb;3, 4,  8, 9, 1, 3
+hirajoshi;E;4, 5,  9,  10, 2, 4
+hirajoshi;F;5, 6,  10, 11,  3, 5
+hirajoshi;F# / Gb;6, 7, 11,  0, 4, 6
+hirajoshi;G;7, 8,  0,  1, 5, 7
+hirajoshi;G# / Ab;8,  9, 1,  2, 6, 8
+hirajoshi;A;9, 11,  2,  3, 7, 9
+hirajoshi;A# / Bb;10, 11, 3,  4, 8, 10
+hirajoshi;B;11, 0, 4, 5, 9, 11
+hungarian;C;0, 2, 3, 6, 7, 8, 11, 0
+hungarian;C# / Db;1, 3, 4, 7, 8, 9, 0, 1
+hungarian;D;2, 4, 5, 8, 9, 10, 1, 2
+hungarian;D# /Eb;3, 5, 6, 9, 10, 11, 2, 3
+hungarian;E;4, 6, 7, 10, 11, 0, 3, 4
+hungarian;F;5, 7, 8, 11, 0, 1, 4, 5
+hungarian;F# / Gb;6, 8, 9, 0, 1, 2, 5, 6
+hungarian;G;7, 9, 10, 1, 2, 3, 6, 7
+hungarian;G# / Ab;8, 10, 11, 2, 3, 4, 7, 8
+hungarian;A;9, 11, 0, 3, 4, 5, 8, 9
+hungarian;A# / Bb;10, 0, 1, 4, 5, 6, 9, 10
+hungarian;B;11, 1, 2, 5, 6, 7, 10, 11
+japanese-in-sen;C;0, 1,  5, 7, 10, 0
+japanese-in-sen;C# / Db;1, 2, 6, 8, 11, 1
+japanese-in-sen;D;2, 3,  7, 9,  0, 2
+japanese-in-sen;D# /Eb;3, 4, 8, 10,  1, 3
+japanese-in-sen;E;4, 5, 9, 11,  2, 4
+japanese-in-sen;F;5, 6, 10,  0, 3,  5
+japanese-in-sen;F# / Gb;6, 7, 11, 1,  4, 6
+japanese-in-sen;G;7, 8, 0, 2,  5, 7
+japanese-in-sen;G# / Ab;8, 9,  1, 3,  6, 8
+japanese-in-sen;A;9, 10,  2, 4, 7, 9
+japanese-in-sen;A# / Bb;10, 11, 3,  5, 8, 10
+japanese-in-sen;B;11, 0,  4, 6, 9, 11
+lydian-dominant;C;0, 2, 4, 6, 7, 9, 10, 0
+lydian-dominant;C# / Db;1, 3, 5, 7, 8, 10, 11, 1
+lydian-dominant;D;2, 4, 6, 8, 9, 11, 0, 2
+lydian-dominant;D# /Eb;3, 5, 7, 9, 10, 0, 1, 3
+lydian-dominant;E;4, 6, 8, 10, 11, 1, 2, 4
+lydian-dominant;F;5, 7, 9, 11, 0, 2, 3, 5
+lydian-dominant;F# / Gb;6, 8, 10, 0, 1, 3, 4, 6
+lydian-dominant;G;7, 9, 11, 1, 2, 4, 5, 7
+lydian-dominant;G# / Ab;8, 10, 0, 2, 3, 5, 6, 8
+lydian-dominant;A;9, 11, 1, 3, 4, 6, 7, 9
+lydian-dominant;A# / Bb;10, 0, 2, 4, 5, 7, 8, 10
+lydian-dominant;B;11, 1, 3, 5, 6, 8, 9, 11
+neapolitan;C;0, 1, 3, 5, 7, 8, 11, 0
+neapolitan;C# / Db;1, 2, 4, 6, 8, 9, 0, 1
+neapolitan;D;2, 3, 5, 7, 9, 10, 1, 2
+neapolitan;D# /Eb;3, 4, 6, 8, 10, 11, 2, 3
+neapolitan;E;4, 5, 7, 9, 11, 0, 3, 4
+neapolitan;F;5, 6, 8, 10, 0, 1, 4, 5
+neapolitan;F# / Gb;6, 7, 9, 11, 1, 2, 5, 6
+neapolitan;G;7, 8, 10, 0, 2, 3, 6, 7
+neapolitan;G# / Ab;8, 9, 11, 1, 3, 4, 7, 8
+neapolitan;A;9, 10, 0, 2, 4, 5, 8, 9
+neapolitan;A# / Bb;10, 11, 1, 3, 5, 6, 9, 10
+neapolitan;B;11, 0, 2, 4, 6, 7, 10, 11
+octatonic;C;0, 1, 3, 4,  6, 7, 9, 10, 0
+octatonic;C# / Db;1, 2,  4, 5, 7, 8, 10, 11, 1
+octatonic;D;2, 3, 5, 6, 8, 9,  11, 0, 2
+octatonic;D# /Eb;3,  4, 6, 7, 9, 10, 0, 1, 3
+octatonic;E;4, 5, 7, 8, 10, 11, 1, 2, 4
+octatonic;F;5, 6,  8, 9, 11, 0, 2, 3, 5
+octatonic;F# / Gb;6, 7, 9, 10, 0, 1, 3, 4, 6
+octatonic;G;7, 8,  10, 11, 1, 2, 4, 5, 7
+octatonic;G# / Ab;8, 9, 11, 0, 2, 3, 5, 6, 8
+octatonic;A;9, 10,  0, 1, 3, 4, 6, 7, 9
+octatonic;A# / Bb;10,  11, 1, 2, 4, 5, 7, 8, 10
+octatonic;B;11, 0, 2,  3, 5, 6, 8, 9, 11
+oriental;C;0, 1, 4, 5, 6, 9, 10, 0
+oriental;C# / Db;1, 2, 5, 6, 7, 10, 11, 1
+oriental;D;2, 3, 6, 7, 8, 11, 0, 2
+oriental;D# /Eb;3, 4, 7, 8, 9, 0, 1, 3
+oriental;E;4, 5, 8, 9, 10, 1, 2, 4
+oriental;F;5, 6, 9, 10, 11, 2, 3, 5
+oriental;F# / Gb;6, 7, 10, 11, 0, 3, 4, 6
+oriental;G;7, 8, 11, 0, 1, 4, 5, 7
+oriental;G# / Ab;8, 9, 0, 1, 2, 7, 6, 8
+oriental;A;9, 10, 1, 2, 3, 6, 7, 9
+oriental;A# / Bb;10, 11, 2, 3, 4, 7, 8, 10
+oriental;B;11, 0, 3, 4, 5, 8, 9, 11
+whole-tone;C;0, 2, 4, 6,  8, 10, 0
+whole-tone;C# / Db;1, 3,  5, 7, 9, 11, 1
+whole-tone;D;2, 4, 6, 8, 10,  0, 2
+whole-tone;D# /Eb;3,  5, 7, 9, 11, 1, 3
+whole-tone;E;4, 6, 8, 10, 0, 2, 4
+whole-tone;F;5, 7, 9, 11, 1, 3, 5
+whole-tone;F# / Gb;6, 8,  10, 0, 2, 4, 6
+whole-tone;G;7, 9,  11, 1, 3, 5, 7
+whole-tone;G# / Ab;8, 10, 0, 2, 4, 6, 8
+whole-tone;A;9, 11,  1, 3, 5, 7, 9
+whole-tone;A# / Bb;10,  0, 2, 4, 6, 8, 10
+whole-tone;B;11, 1, 3,  5, 7, 9, 11
+romanian-minor;C;0, 2, 3, 6, 7, 9, 10, 0
+romanian-minor;C# / Db;1, 3, 4, 7, 8, 10, 11, 1
+romanian-minor;D;2, 4, 5, 8, 9, 11, 0, 2
+romanian-minor;D# /Eb;3, 5, 6, 9, 10, 0, 1, 3
+romanian-minor;E;4, 6, 7, 10, 11, 1, 2, 4
+romanian-minor;F;5, 7, 8, 11, 0, 2, 3, 5
+romanian-minor;F# / Gb;6, 8, 9, 0, 1, 3, 4, 6
+romanian-minor;G;7, 9, 10, 1, 2, 4, 5, 7
+romanian-minor;G# / Ab;10, 11, 2, 3, 5, 6, 8
+romanian-minor;A;9, 11, 0, 3, 4, 6, 7, 9
+romanian-minor;A# / Bb;10, 0, 1, 4, 5, 7, 8, 10
+romanian-minor;B;11, 1, 2, 5, 6, 8, 9
+spanish-gypsy;C;0, 1, 4, 5, 7, 8, 10, 0
+spanish-gypsy;C# / Db;1, 2, 5, 6, 8, 9, 11, 1
+spanish-gypsy;D;2, 3, 6, 7, 9, 10, 0, 2
+spanish-gypsy;D# /Eb;3, 4, 7, 8, 10, 11, 1, 3
+spanish-gypsy;E;4, 5, 8, 9, 11, 0, 2, 4
+spanish-gypsy;F;5, 6, 9, 10, 0, 1, 3, 5
+spanish-gypsy;F# / Gb;6, 7, 10, 11, 1, 2, 4, 6
+spanish-gypsy;G;7, 8, 11, 0, 2, 3, 5, 7
+spanish-gypsy;G# / Ab;8, 9, 0, 1, 3, 4, 6, 8
+spanish-gypsy;A;9, 10, 1, 2, 4, 5, 7, 9
+spanish-gypsy;A# / Bb;10, 11, 2, 3, 5, 6, 8, 10
+spanish-gypsy;B;11, 0, 3, 4, 6, 7, 9, 11
+altered;C;0, 1, 3, 4, 6,  8, 10, 0
+altered;C# / Db;1, 2, 4, 5, 7, 9, 11, 1
+altered;D;2, 3, 5, 6, 8, 10, 0, 2
+altered;D# /Eb;3, 4, 6, 7, 9, 11, 1, 3
+altered;E;4, 5, 7, 8, 10, 0, 2, 4
+altered;F;5, 6, 8, 9, 11, 1, 3, 5
+altered;F# / Gb;6, 7, 9, 10, 0, 2, 4, 6
+altered;G;7, 8, 10, 11, 1, 3, 5, 7
+altered;G# / Ab;8, 9, 11, 0, 2, 4, 6, 8
+altered;A;9, 10, 0, 1, 3, 5, 7, 9
+altered;A# / Bb;10, 11, 1, 2, 4, 6, 8, 10
+altered;B;11, 0, 2, 3, 5, 7, 9, 11
+yo;C;0, 2,   5, 7, 9, 0
+yo;C# / Db;1, 3,   6, 8, 10, 1
+yo;D;2, 4,  7, 9, 11, 2
+yo;D# /Eb;3, 5, 8, 10,  0, 3
+yo;E;4, 6, 9, 11,  1, 4
+yo;F;5, 7, 10,  0, 2,  5
+yo;F# / Gb;6, 8, 11, 1,  3, 6
+yo;G;7, 9, 0, 2,  4, 7
+yo;G# / Ab;8, 10,  1, 3,  5, 8
+yo;A;9, 11,   2, 4, 6, 9
+yo;A# / Bb;10, 0, 3,  5, 7, 10
+yo;B;11, 1,  4, 6, 8, 11
