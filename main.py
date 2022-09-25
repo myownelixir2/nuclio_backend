@@ -169,10 +169,6 @@ class SequenceConfig:
         return audio_frame_rep_nr
  
 
-
-    
-
-
 class SequenceAudioFrameSlicer:
     def __init__(self, audio, sequence_config):
         self.audio = audio
@@ -203,7 +199,9 @@ class SequenceAudioFrameSlicer:
         unique_audio_frames_lengths = np.unique(audio_frames_lengths)
         audio_frames = [self.frames_list(x, y) for x, y in zip(sequence_l, unique_audio_frames_lengths)]
         return audio_frames
-    
+
+
+  
 class AudioFrameSlicer(SequenceConfig):
     def __init__(self, audio, rhythm_config, pitch_temperature, bpm, scale_value, keynote):
         super().__init__(audio, rhythm_config, pitch_temperature, bpm, scale_value, keynote)    
@@ -234,22 +232,24 @@ class AudioFrameSlicer(SequenceConfig):
         return audio_frames
         
 class SequenceEngine:
-    def __init__(self, audio, sequence_config, audio_frames, pitch_temperature):
-        self.audio = audio
+    def __init__(self, sequence_config, audio_frames):
         self.audio_frames = audio_frames
-        self.pitch_temperature = pitch_temperature
-        self.sequence_config = sequence_config
+        self.sequence_config = sequence_config   
+
+    def __validate_sequence(self, new_sequence):
+        one_bar = 60/self.sequence_config.bpm*4
+        original_sample_len = round(44100*one_bar/1)
+        new_sequence_len = len(new_sequence)
         
-    #TODO
-    def __validate_sequence(self):
-        sequence = self.sequence_config.sequence
-        sequence_len = len(sequence)
-        audio_frames_len = len(self.audio_frames)
-        if sequence_len > audio_frames_len:
-            sequence = sequence[:audio_frames_len]
-        elif sequence_len < audio_frames_len:
-            sequence = sequence*(math.floor(audio_frames_len/sequence_len))
-        return sequence
+        new_sequence_unpacked = [item for sublist in new_sequence for item in sublist]
+        
+        if new_sequence_len > original_sample_len:
+            validated_sequence = new_sequence_unpacked[:original_sample_len]
+        elif new_sequence_len < original_sample_len:
+            empty_array = np.zeros(original_sample_len-new_sequence_len)
+            validated_sequence = np.append(new_sequence_unpacked, empty_array)
+        return validated_sequence
+    
     
     def __unpack_multi_level_list(self, my_list):
         unpacked_list = []
@@ -261,18 +261,18 @@ class SequenceEngine:
     def __pitch_shift(self, audio, pitch_shift):
         return librosa.effects.pitch_shift(audio, sr=44100, n_steps=pitch_shift)
 
-    #TODO
+  
     def __apply_pitch_shift(self, audio_frames : List[float], pitch_shift : Optional[list]):
-        #sequence = self.__validate_sequence()
-        #audio_sequence = self.generate_audio_sequence()
-        if (random.random() > self.pitch_temperature) and (self.pitch_temperature != 0):
+      
+        if (random.random() > self.sequence_config.pitch_temperature[0]/100) and (self.sequence_config.pitch_temperature != 0):
             pitch_shifted_audio_sequence = []
             for i in range(len(audio_frames)):
+                
                 pitch_shifted_audio_sequence.append(self.__pitch_shift(audio_frames[i], pitch_shift[i]))
             return pitch_shifted_audio_sequence
         else: 
             return audio_frames
-    #TODO
+  
     def generate_audio_sequence(self):
         my_audio_frames_lengths = self.sequence_config.get_audio_frames_length()
         my_audio_frames = self.audio_frames.get_audio_frames()
@@ -284,11 +284,13 @@ class SequenceEngine:
             nr_elements_to_select = list(occurences_of_distinct_frames.values())[i]
             temp_sequence = random.choices(my_audio_frames[i], k=nr_elements_to_select)
             new_audio_sequence.append(temp_sequence)
-        #return self.__unpack_multi_level_list(new_sequence)
-        new_sequence_unlisted =  [item for sublist in new_audio_sequence for item in sublist]
+            
+        new_sequence_unlisted = [item for sublist in new_audio_sequence for item in sublist]
         note_sequence = self.sequence_config.get_note_sequence()
+        note_sequence_updated = random.choices(note_sequence, k = len(new_sequence_unlisted))
         
-        updated_new_audio_sequence = self.__apply_pitch_shift(new_sequence_unlisted, note_sequence)
+        
+        updated_new_audio_sequence = self.__apply_pitch_shift(new_sequence_unlisted, note_sequence_updated)
         validated_audio_sequence = self.__validate_sequence(updated_new_audio_sequence)
         return validated_audio_sequence
     
@@ -310,23 +312,20 @@ new_config = SequenceConfig(audio, rythm_config_list[0], pitch_temperature_knob_
 
 new_audio_frames = SequenceAudioFrameSlicer(audio, new_config) 
 
+validated_audio_sequence = SequenceEngine(new_config, new_audio_frames).generate_audio_sequence()
+
+len(validated_audio_sequence)
 
 my_audio_frames_lengths = new_config.get_audio_frames_length()
 my_audio_frames = new_audio_frames.get_audio_frames()
 
 
-my_audio_frames_lengths_sanitized = [int(item) for item in my_audio_frames_lengths]
-occurences_of_distinct_frames = Counter(my_audio_frames_lengths_sanitized)
 
-new_sequence = []
-for i in range(len(my_audio_frames)):
 
-    nr_elements_to_select = list(occurences_of_distinct_frames.values())[i]
-    temp_sequence = random.choices(my_audio_frames[i], k=nr_elements_to_select)
-    new_sequence.append(temp_sequence)
-
-len(new_sequence[1]) 
+def __unpack_list(self, l : list):
+        return [item for sublist in l for item in sublist]
     
+        
 def multi_level_list(my_list):
     unpacked_list = []
     for i in range(len(my_list)):
