@@ -115,6 +115,16 @@ class SequenceConfig:
                 del data[-1]  
         return [x for y in data for x in y] 
 
+    def get_note_sequence(self) -> list:
+        notes_match_table = pd.read_pickle('notes_match_table.pkl')
+        notes_sequence_raw = notes_match_table.query("scale_name==@self.scale_value & key==@self.keynote").filter(['notes'])
+        
+        notes_sequence_extracted_str = notes_sequence_raw["notes"].values[0].split(", ")
+        notes_sequence_extracted_int = [int(i) for i in notes_sequence_extracted_str]
+        notes_sequence_extracted_int_octave_down = [(i-12) for i in notes_sequence_extracted_int]
+        
+        notes_sequence_complete = notes_sequence_extracted_int_octave_down + notes_sequence_extracted_int 
+        return notes_sequence_complete
      
     def grid_validate(self):
         """
@@ -158,6 +168,10 @@ class SequenceConfig:
             audio_frame_rep_nr.append(grid_value/unique_audio_frame_lengths[i])
         return audio_frame_rep_nr
  
+
+
+    
+
 
 class SequenceAudioFrameSlicer:
     def __init__(self, audio, sequence_config):
@@ -220,10 +234,22 @@ class AudioFrameSlicer(SequenceConfig):
         return audio_frames
         
 class SequenceEngine:
-    def __init__(self, audio, sequence_config, audio_frames):
+    def __init__(self, audio, sequence_config, audio_frames, pitch_temperature):
         self.audio = audio
         self.audio_frames = audio_frames
+        self.pitch_temperature = pitch_temperature
         self.sequence_config = sequence_config
+        
+    #TODO
+    def __validate_sequence(self):
+        sequence = self.sequence_config.sequence
+        sequence_len = len(sequence)
+        audio_frames_len = len(self.audio_frames)
+        if sequence_len > audio_frames_len:
+            sequence = sequence[:audio_frames_len]
+        elif sequence_len < audio_frames_len:
+            sequence = sequence*(math.floor(audio_frames_len/sequence_len))
+        return sequence
     
     def __unpack_multi_level_list(self, my_list):
         unpacked_list = []
@@ -231,22 +257,40 @@ class SequenceEngine:
             for j in range(len(my_list[i])):
                 unpacked_list.append(my_list[i][j])
                 return unpacked_list
-    
+   
     def __pitch_shift(self, audio, pitch_shift):
         return librosa.effects.pitch_shift(audio, sr=44100, n_steps=pitch_shift)
-    
+
+    #TODO
+    def __apply_pitch_shift(self, audio_frames : List[float], pitch_shift : Optional[list]):
+        #sequence = self.__validate_sequence()
+        #audio_sequence = self.generate_audio_sequence()
+        if (random.random() > self.pitch_temperature) and (self.pitch_temperature != 0):
+            pitch_shifted_audio_sequence = []
+            for i in range(len(audio_frames)):
+                pitch_shifted_audio_sequence.append(self.__pitch_shift(audio_frames[i], pitch_shift[i]))
+            return pitch_shifted_audio_sequence
+        else: 
+            return audio_frames
+    #TODO
     def generate_audio_sequence(self):
         my_audio_frames_lengths = self.sequence_config.get_audio_frames_length()
         my_audio_frames = self.audio_frames.get_audio_frames()
         my_audio_frames_lengths_sanitized = [int(item) for item in my_audio_frames_lengths]
         occurences_of_distinct_frames = Counter(my_audio_frames_lengths_sanitized)
 
-        new_sequence = []
+        new_audio_sequence = []
         for i in range(len(my_audio_frames)):
             nr_elements_to_select = list(occurences_of_distinct_frames.values())[i]
             temp_sequence = random.choices(my_audio_frames[i], k=nr_elements_to_select)
-            new_sequence.append(temp_sequence)
-        return self.__unpack_multi_level_list(new_sequence)
+            new_audio_sequence.append(temp_sequence)
+        #return self.__unpack_multi_level_list(new_sequence)
+        new_sequence_unlisted =  [item for sublist in new_audio_sequence for item in sublist]
+        note_sequence = self.sequence_config.get_note_sequence()
+        
+        updated_new_audio_sequence = self.__apply_pitch_shift(new_sequence_unlisted, note_sequence)
+        validated_audio_sequence = self.__validate_sequence(updated_new_audio_sequence)
+        return validated_audio_sequence
     
     def generate_audio_sequence_auto(self):
         audio_frames = self.audio_frames.get_audio_frames()
@@ -292,8 +336,7 @@ def multi_level_list(my_list):
 
 multi_level_list(new_sequence)
 
-[item for sublist in new_sequence for item in sublist]
-    #print(f"Frame length: {list(occurences_of_distinct_frames)[i]} \t Occurences: {list(occurences_of_distinct_frames.values())[i]}")
+new_sequence_frames = [item for sublist in new_sequence for item in sublist]
 
 
 
@@ -308,21 +351,6 @@ list(np.concatenate(my_audio_frames).flat)
 class GeneratorError():
     pass       
         
-class Generator():
-    pass
-
-    def sanitize_note_config(self) -> list:
-            notes_match_table = pd.read_pickle('notes_match_table.pkl')
-            notes_sequence_raw = notes_match_table.query("scale_name==@self.scale_value & key==@self.keynote").filter(['notes'])
-            notes_sequence_extracted_str = notes_sequence_raw["notes"].values[0].split(", ")
-            notes_sequence_extracted_int = [int(i) for i in notes_sequence_extracted_str]
-            notes_sequence_extracted_int_octave_down = [(i-12) for i in notes_sequence_extracted_int]
-            notes_sequence_complete = notes_sequence_extracted_int_octave_down + notes_sequence_extracted_int 
-            return notes_sequence_complete
-
-    def euclead_rhythm_generator():
-        print()
-
 
 class wave_reader():
     pass
