@@ -23,6 +23,8 @@ def psuedo_json_to_dict(file_path):
     return json_dict
         
 
+
+
 job_id_dict = psuedo_json_to_dict('test_job_id2.json')     
 
 
@@ -48,36 +50,18 @@ notes_match_table.columns.values
 sample_mp3 = '/Volumes/DATA VAULT/SAMPLE_DB_STAGING/loop__other/PITCH_B__BPM_125__Drums_Loops_LA_Drums_01_125.mp3'
 
 
-      #def output_paths(self):
-    #    raw_file_output = 0
-    #    master_file_output = 0
-    #    print() 
-     #total_length_samples = round(44100*one_bar/1)
-
-
 audio, sr = librosa.load(sample_mp3,sr=44100)
 len(audio)
 
 
 
-def Euclid(n, k):
-    data = [[1 if i < n else 0] for i in range(k)]
-    
-    while True:
-        
-        k = k - n
-
-        if k <= 1:
-            break
-
-        elif k < n:
-            n, k = k, n
-
-        for i in range(n):
-            data[i] += data[-1]
-            del data[-1]
-    
-    return [x for y in data for x in y]
+class JsonParser:
+    def psuedo_json_to_dict(file_path):   
+        with open(file_path,'r') as lst:
+                json_psudo = json.load(lst)
+                json_sanitized = re.sub(r'("\s*:\s*)undefined(\s*[,}])', '\\1null\\2', json_psudo[0])
+                json_dict = json.loads(json_sanitized)
+        return json_dict
 
 class StorageAccess():
     pass
@@ -170,8 +154,8 @@ class SequenceConfig:
  
 
 class SequenceAudioFrameSlicer:
-    def __init__(self, audio, sequence_config):
-        self.audio = audio
+    def __init__(self, sequence_config):
+        #self.audio = audio
         self.sequence_config = sequence_config
         
           
@@ -190,7 +174,7 @@ class SequenceAudioFrameSlicer:
     def frames_list(self, individual_frames : list, unique_frame_length : float):
         sliced_frames = []
         for frame in individual_frames:
-            sliced_frames.append(self.audio[int(frame):int(frame)+int(unique_frame_length)])
+            sliced_frames.append(self.sequence_config.audio[int(frame):int(frame)+int(unique_frame_length)])
         return sliced_frames   
         
     def get_audio_frames(self):
@@ -200,8 +184,7 @@ class SequenceAudioFrameSlicer:
         audio_frames = [self.frames_list(x, y) for x, y in zip(sequence_l, unique_audio_frames_lengths)]
         return audio_frames
 
-
-  
+ 
 class AudioFrameSlicer(SequenceConfig):
     def __init__(self, audio, rhythm_config, pitch_temperature, bpm, scale_value, keynote):
         super().__init__(audio, rhythm_config, pitch_temperature, bpm, scale_value, keynote)    
@@ -231,9 +214,7 @@ class AudioFrameSlicer(SequenceConfig):
         audio_frames = [self.frames_list(x, y) for x, y in zip(sequence_l, unique_audio_frames_lengths)]
         return audio_frames
      
-
-
-   
+ 
 class SequenceEngine:
     def __init__(self, sequence_config, audio_frames):
         self.audio_frames = audio_frames
@@ -310,70 +291,20 @@ class SequenceEngine:
     
     
     
- #WORKING ON THIS CLASS 
+#WORKING ON THIS CLASS 
 #initialize classes
 new_config = SequenceConfig(audio, rythm_config_list[0], pitch_temperature_knob_list[0], bpm, scale_value, key_value)      
 
-new_audio_frames = SequenceAudioFrameSlicer(audio, new_config) 
+new_audio_frames = SequenceAudioFrameSlicer(new_config) 
 
 validated_audio_sequence = SequenceEngine(new_config, new_audio_frames).generate_audio_sequence()
 
-
+sf.write('test.wav', validated_audio_sequence, 44100)
 
 len(validated_audio_sequence)
 
-my_audio_frames_lengths = new_config.get_audio_frames_length()
-my_audio_frames = new_audio_frames.get_audio_frames()
 
 
-
-
-def __unpack_list(self, l : list):
-        return [item for sublist in l for item in sublist]
-    
-        
-def multi_level_list(my_list):
-    unpacked_list = []
-    for i in range(len(my_list)):
-        for j in range(len(my_list[i])):
-            unpacked_list.append(my_list[i][j])
-            return unpacked_list
-
-multi_level_list(new_sequence)
-
-new_sequence_frames = [item for sublist in new_sequence for item in sublist]
-
-
-
-
-
-
-
-len(my_audio_frames[1])
-
-list(np.concatenate(my_audio_frames).flat)
-    
-class GeneratorError():
-    pass       
-        
-
-class wave_reader():
-    pass
-
-def generate_random_string():
-    print()
-
-def get_note_sequence():
-    print()
-    
-def get_sequence_config():
-    print()
-
-def get_sequence_grid_coord():
-    print()
-
-def generate_sequqnce_by_track():
-    print()
 
 
 #pydantic
