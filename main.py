@@ -230,7 +230,10 @@ class AudioFrameSlicer(SequenceConfig):
         unique_audio_frames_lengths = np.unique(audio_frames_lengths)
         audio_frames = [self.frames_list(x, y) for x, y in zip(sequence_l, unique_audio_frames_lengths)]
         return audio_frames
-        
+     
+
+
+   
 class SequenceEngine:
     def __init__(self, sequence_config, audio_frames):
         self.audio_frames = audio_frames
@@ -239,14 +242,15 @@ class SequenceEngine:
     def __validate_sequence(self, new_sequence):
         one_bar = 60/self.sequence_config.bpm*4
         original_sample_len = round(44100*one_bar/1)
-        new_sequence_len = len(new_sequence)
         
         new_sequence_unpacked = [item for sublist in new_sequence for item in sublist]
+        new_sequence_len = len(new_sequence_unpacked)
         
         if new_sequence_len > original_sample_len:
             validated_sequence = new_sequence_unpacked[:original_sample_len]
         elif new_sequence_len < original_sample_len:
             empty_array = np.zeros(original_sample_len-new_sequence_len)
+            
             validated_sequence = np.append(new_sequence_unpacked, empty_array)
         return validated_sequence
     
@@ -313,6 +317,8 @@ new_config = SequenceConfig(audio, rythm_config_list[0], pitch_temperature_knob_
 new_audio_frames = SequenceAudioFrameSlicer(audio, new_config) 
 
 validated_audio_sequence = SequenceEngine(new_config, new_audio_frames).generate_audio_sequence()
+
+
 
 len(validated_audio_sequence)
 
