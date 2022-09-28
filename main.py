@@ -8,7 +8,7 @@ import librosa
 import soundfile as sf
 import numpy as np
 import math
-from pydub import AudioSegment
+import pydub
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field, BaseSettings, validator, SecretStr
@@ -91,17 +91,16 @@ class StorageCreds(BaseSettings):
     secret_access_key : str = Field(..., env="STORAGE_SECRET")
  
  
-   
 
-class JobConfig:
+class FileLocation:
     def __init__(self, job_id):
         self.job_id = job_id
         
     def path_resolver(self):
-        sanitized_job_id = self.job_id.replace('job_ids/','')
-        local_path = f'temp/{sanitized_job_id}'
-        local_path_processed = f'temp/sequences_{sanitized_job_id}'
-        cloud_path_processed = f'sequences/{sanitized_job_id}'
+        sanitized_job_id = self.job_id.split('/')[1].replace('.json','')
+        local_path = f'temp/{sanitized_job_id}.json'
+        local_path_processed = f'temp/sequences_{sanitized_job_id}.wav'
+        cloud_path_processed = f'sequences/{sanitized_job_id}.wav'
         paths_dict = {'cloud_job_id': self.job_id, 
                 'local_path': local_path, 
                 'local_path_processed': local_path_processed, 
@@ -110,7 +109,8 @@ class JobConfig:
             
 
 
-job_config = JobConfig('job_ids/1234567890').path_resolver()
+
+job_config = FileLocation('job_ids/1234567890.json').path_resolver()
 
 
 
@@ -119,7 +119,7 @@ class StorageEngine:
     
     def __init__(self, job_id):
         self.job_id = job_id
-  
+        
     
     def initiatialize_client(self):
         self.client = boto3.resource('s3',
@@ -134,7 +134,7 @@ class StorageEngine:
         try:
             client = self.initiatialize_client()
             bucket = client.Bucket('sample-dump')
-            job_config = JobConfig(self.job_id).path_resolver()
+            job_config = FileLocation(self.job_id).path_resolver()
             bucket.download_file(job_config['cloud_path_processed'], job_config['local_path_processed'])
             return True
         except Exception as e:
@@ -145,7 +145,7 @@ class StorageEngine:
         try:
             client = self.initiatialize_client()
             bucket = client.Bucket('sample-dump')
-            job_config = JobConfig(self.job_id).path_resolver()
+            job_config = FileLocation(self.job_id).path_resolver()
             bucket.upload_file(job_config['local_path_processed'], job_config['cloud_path_processed'])
             return True
         except Exception as e:
@@ -227,7 +227,6 @@ class SequenceConfig:
             #print(len(pulse_sequence[onsets:silence]))
             audio_frames_lengths.append((silence-onsets+1)*pulse_length_samples)
         return audio_frames_lengths
-    
     
     def get_audio_frames_reps(self) -> list:
         grid_value, __ = self.grid_validate()
@@ -344,7 +343,8 @@ class SequenceEngine:
             return pitch_shifted_audio_sequence
         else: 
             return audio_frames
-  
+    
+    
     def generate_audio_sequence(self):
         my_audio_frames_lengths = self.sequence_config.get_audio_frames_length()
         my_audio_frames = self.audio_frames.get_audio_frames()
@@ -361,7 +361,6 @@ class SequenceEngine:
         note_sequence = self.sequence_config.get_note_sequence()
         note_sequence_updated = random.choices(note_sequence, k = len(new_sequence_unlisted))
         
-        
         updated_new_audio_sequence = self.__apply_pitch_shift(new_sequence_unlisted, note_sequence_updated)
         validated_audio_sequence = self.__validate_sequence(updated_new_audio_sequence)
         return validated_audio_sequence
@@ -376,6 +375,34 @@ class SequenceEngine:
             audio_frames_sequence.append(np.random.choice(audio_frames[i], int(unique_audio_frames_lengths[i]), replace=False))
         return self.__unpack_multi_level_list(audio_frames_sequence)
     
+
+class SequenceEngineAudio:
+    
+    def __init__(self, validated_audio_sequence, file_loc, normalized = None):
+        self.audio_sequence = validated_audio_sequence
+        self.file_loc = file_loc
+        self.normalized = normalized
+    
+    def save_to_wav(self):
+        try:
+            sf.write(self.file_loc, self.audio_sequence, 44100)
+            #librosa.output.write_wav(self.file_loc, self.audio_sequence, sr=44100, norm=self.normalized)     
+        except Exception as e:
+            print("Error converting to wav", e)
+            raise e
+        
+    def save_to_mp3(self):
+        try:
+            channels = 2 if (self.audio_sequence.ndim == 2 and self.audio_sequence.shape[1] == 2) else 1
+            if self.normalized:  # normalized array - each item should be a float in [-1, 1)
+                y = np.int16(self.audio_sequence * 2 ** 15)
+            else:
+                y = np.int16(self.audio_sequence)
+            sequence = pydub.AudioSegment(y.tobytes(), frame_rate=sr, sample_width=2, channels=channels)
+            sequence.export(self.file_loc, format="mp3", bitrate="128k")
+        except Exception as e:
+            print("Error converting to mp3", e)
+            raise e
     
     
 #WORKING ON THIS CLASS 
@@ -386,7 +413,7 @@ new_audio_frames = SequenceAudioFrameSlicer(new_config)
 
 validated_audio_sequence = SequenceEngine(new_config, new_audio_frames).generate_audio_sequence()
 
-sf.write('test.wav', validated_audio_sequence, 44100)
+sf.write('test3.wav', validated_audio_sequence, 44100)
 
 len(validated_audio_sequence)
 
