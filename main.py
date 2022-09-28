@@ -11,9 +11,10 @@ import math
 from pydub import AudioSegment
 from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel, Field, BaseSettings, validator
+from pydantic import BaseModel, Field, BaseSettings, validator, SecretStr
 from collections import Counter
 import random
+import boto3
 
 def psuedo_json_to_dict(file_path):   
     with open(file_path,'r') as lst:
@@ -55,17 +56,103 @@ len(audio)
 
 
 
-class JsonParser:
-    def psuedo_json_to_dict(file_path):   
-        with open(file_path,'r') as lst:
+class SerializeInput:    
+    def __init__(self, file_path, channel_index):
+        self.file_path : str = file_path 
+        self.channel_index  : int = channel_index
+
+
+    def psuedo_json_to_dict(self):   
+        with open(self.file_path,'r') as lst:
                 json_psudo = json.load(lst)
                 json_sanitized = re.sub(r'("\s*:\s*)undefined(\s*[,}])', '\\1null\\2', json_psudo[0])
                 json_dict = json.loads(json_sanitized)
         return json_dict
+    
+    def get_job_params(self):
+        job_id_dict = self.psuedo_json_to_dict()
+        index = self.channel_index
+        
+        params_dict = {'local_paths':job_id_dict["local_paths"][index], 
+                       'cloud_paths':job_id_dict["cloud_paths"][index], 
+                       'bpm':job_id_dict["bpm"][0], 
+                       'scale_value':job_id_dict["scale_value"][0], 
+                       'key_value':key_value, 
+                       'rythm_config_list':job_id_dict["rythm_config_list"][index], 
+                       'pitch_temperature_knob_list':job_id_dict["pitch_temperature_knob_list"][index]}
+        
+        return params_dict
+    
+test_serialized = SerializeInput('test_job_id2.json', 2).get_job_params()
 
-class StorageAccess():
-    pass
+class StorageCreds(BaseSettings):
+    endpoint_url : str = Field(..., env="STORAGE_URL")
+    access_key_id : str = Field(..., env="STORAGE_KEY")
+    secret_access_key : str = Field(..., env="STORAGE_SECRET")
+ 
+ 
+   
 
+class JobConfig:
+    def __init__(self, job_id):
+        self.job_id = job_id
+        
+    def path_resolver(self):
+        sanitized_job_id = self.job_id.replace('job_ids/','')
+        local_path = f'temp/{sanitized_job_id}'
+        local_path_processed = f'temp/sequences_{sanitized_job_id}'
+        cloud_path_processed = f'sequences/{sanitized_job_id}'
+        paths_dict = {'cloud_job_id': self.job_id, 
+                'local_path': local_path, 
+                'local_path_processed': local_path_processed, 
+                'cloud_path_processed': cloud_path_processed}
+        return paths_dict
+            
+
+
+job_config = JobConfig('job_ids/1234567890').path_resolver()
+
+
+
+
+class StorageEngine:
+    
+    def __init__(self, job_id):
+        self.job_id = job_id
+  
+    
+    def initiatialize_client(self):
+        self.client = boto3.resource('s3',
+            endpoint_url=StorageCreds().endpoint_url,
+            aws_access_key_id=StorageCreds().access_key_id,
+            aws_secret_access_key=StorageCreds().secret_access_key
+        )
+        return self.client
+        
+       
+    def get_object(self):
+        try:
+            client = self.initiatialize_client()
+            bucket = client.Bucket('sample-dump')
+            job_config = JobConfig(self.job_id).path_resolver()
+            bucket.download_file(job_config['cloud_path_processed'], job_config['local_path_processed'])
+            return True
+        except Exception as e:
+            print(e)
+            return False
+    
+    def upload_object(self):
+        try:
+            client = self.initiatialize_client()
+            bucket = client.Bucket('sample-dump')
+            job_config = JobConfig(self.job_id).path_resolver()
+            bucket.upload_file(job_config['local_path_processed'], job_config['cloud_path_processed'])
+            return True
+        except Exception as e:
+            print(e)
+            return False
+
+        
 class StorageAccessError():
     pass
 
