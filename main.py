@@ -123,8 +123,8 @@ class JobConfig:
     def path_resolver(self):
         sanitized_job_id = self.job_id.split('/')[1].replace('.json','')
         local_path = f'temp/{sanitized_job_id}.json'
-        local_path_processed = f'temp/sequences_{sanitized_job_id}.mp3'
-        cloud_path_processed = f'sequences/{sanitized_job_id}.mp3'
+        local_path_processed = f'temp/sequences_{sanitized_job_id}_{self.channel_index}.mp3'
+        cloud_path_processed = f'sequences/{sanitized_job_id}_{self.channel_index}.mp3'
         paths_dict = {'cloud_path': self.job_id, 
                 'local_path': local_path, 
                 'local_path_processed': local_path_processed, 
@@ -403,63 +403,66 @@ class AudioEngine:
             print("Error converting to mp3", e)
             raise e
     
+#### RUN JOB ####
 
-
+class JobRunner:
+    def __init__(self, job_id, channel_index):
+        self.job_id = job_id
+        self.channel_index = channel_index
+       
+    def get_assets(self):
+        try:
+            StorageEngine(self.job_params,'job_id_path').get_object()
+            StorageEngine(self.job_params,'asset_path').get_object()
+        except Exception as e:
+            print(e)
+    
+    def validate(self):
+        try:
+            new_config_test = SequenceConfigRefactor(self.job_params)
+            new_audio_frames = SequenceAudioFrameSlicer(new_config_test) 
+            validated_audio_sequence = SequenceEngine(new_config_test, new_audio_frames).generate_audio_sequence()
+            return validated_audio_sequence
+        except Exception as e:
+            print(e)  
+            return False 
+    
+    def result(self, result):
+        try:
+            if result == True:
+                cloud_path = self.job_params.path_resolver()['cloud_path_processed']
+                return cloud_path
+            else:
+                return print('Job failed')
+        except Exception as e:
+            print(e)
+            return print('Error')
+     
+    def execute(self):
+        self.job_params = JobConfig(self.job_id, self.channel_index)
+        
+        self.get_assets()
+        validated_audio = self.validate()
+        try:
+            
+            AudioEngine(validated_audio, self.job_params.path_resolver()['local_path_processed'], normalized = True).save_to_mp3()
+            StorageEngine(self.job_params,'processed_job_path').upload_object()
+            return True
+        except Exception as e:
+            print(e)
+            return False
    
-#WORKING ON THIS CLASS 
-#initialize classes
+
 import time
 job_st = time.time()
 
-job_params = JobConfig(test_job_id_cloud, 4)
-job_params.get_job_params()
+job = JobRunner(test_job_id_cloud, 5)
+
+res = job.execute()
+
+processed_job_id = job.result(res)
+
 
 job_et = time.time()
-
-download_st = time.time()
-StorageEngine(job_params,'job_id_path').get_object()
-StorageEngine(job_params,'asset_path').get_object()
-download_et = time.time()
-
-processing_st = time.time()
-new_config_test = SequenceConfigRefactor(job_params)
-new_audio_frames = SequenceAudioFrameSlicer(new_config_test) 
-validated_audio_sequence = SequenceEngine(new_config_test, new_audio_frames).generate_audio_sequence()
-#AudioEngine(validated_audio_sequence, job_params.path_resolver()['local_path_processed'], normalized = True).save_to_wav()
-AudioEngine(validated_audio_sequence, job_params.path_resolver()['local_path_processed'], normalized = True).save_to_mp3()
-
-processing_et = time.time()
-
-upload_st = time.time()
-StorageEngine(job_params,'processed_job_path').upload_object()
-
-upload_et = time.time()
-
-# get the execution time
 job_elapsed_time = job_et - job_st
-download_elapsed_time = download_et - download_st
-processing_elapsed_time = processing_et - processing_st
-upload_elapsed_time = upload_et - upload_st
-
 print('Execution time for "JOB SPECS":', job_elapsed_time, 'seconds')
-print('Execution time for "DOWNLOAD ASSETS":', download_elapsed_time, 'seconds')
-print('Execution time for "PROCESS":', processing_elapsed_time, 'seconds')
-print('Execution time for "UPLOAD ASSETS":', upload_elapsed_time, 'seconds')
-
-x_mp3 = np.array(validated_audio_sequence)
-
-import pydub 
-import numpy as np
-
-def write(f, sr, x, normalized=False):
-    """numpy array to MP3"""
-    channels = 2 if (x.ndim == 2 and x.shape[1] == 2) else 1
-    if normalized:  # normalized array - each item should be a float in [-1, 1)
-        y = np.int16(x * 2 ** 15)
-    else:
-        y = np.int16(x)
-    song = pydub.AudioSegment(y.tobytes(), frame_rate=sr, sample_width=2, channels=channels)
-    song.export(f, format="mp3", bitrate="320k")
-
-
-write('out2.mp3', 44100, x_mp3)
