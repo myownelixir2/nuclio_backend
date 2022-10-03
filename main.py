@@ -52,7 +52,6 @@ class StorageEngine:
      
     def __resolve_type(self):
         job_paths = self.job_config.path_resolver()
-        asset_paths = self.job_config.get_job_params()
         
         _check = JobTypeValidator.parse_obj({'job_type': self.asset_type})
         
@@ -65,6 +64,7 @@ class StorageEngine:
             'local_path': job_paths['local_path_processed']}
             return d_paths
         else:
+            asset_paths = self.job_config.get_job_params()
             d_paths = {'cloud_path': asset_paths['cloud_paths'],
             'local_path': asset_paths['local_paths']}
             return d_paths
@@ -148,7 +148,7 @@ class JobConfig:
                        'cloud_paths':job_id_dict["cloud_paths"][_check_index.index_value], 
                        'bpm':job_id_dict["bpm"][0], 
                        'scale_value':job_id_dict["scale_value"][0], 
-                       'key_value':key_value, 
+                       'key_value':job_id_dict["key_value"][0],
                        'rythm_config_list':job_id_dict["rythm_config_list"][_check_index.index_value], 
                        'pitch_temperature_knob_list':job_id_dict["pitch_temperature_knob_list"][_check_index.index_value]}
         
@@ -388,15 +388,16 @@ class AudioEngine:
         except Exception as e:
             print("Error converting to wav", e)
             raise e
-        
+    #TODO
     def save_to_mp3(self):
         try:
-            channels = 2 if (np.array(self.audio_sequence).ndim == 2 and np.array(self.audio_sequence).shape[1] == 2) else 1
+            audio_seq_array = np.array(self.audio_sequence)
+            channels = 2 if (audio_seq_array.ndim == 2 and audio_seq_array.shape[1] == 2) else 1
             if self.normalized:  # normalized array - each item should be a float in [-1, 1)
-                y = np.int16(self.audio_sequence * 2 ** 15)
+                y = np.int16(audio_seq_array * 2 ** 15)
             else:
-                y = np.int16(self.audio_sequence)
-            sequence = pydub.AudioSegment(y.tobytes(), frame_rate=sr, sample_width=2, channels=channels)
+                y = np.int16(audio_seq_array)
+            sequence = pydub.AudioSegment(y.tobytes(), frame_rate=44100, sample_width=2, channels=channels)
             sequence.export(self.file_loc, format="mp3", bitrate="128k")
         except Exception as e:
             print("Error converting to mp3", e)
@@ -410,7 +411,8 @@ class AudioEngine:
 import time
 job_st = time.time()
 
-job_params = JobConfig(test_job_id_cloud, 5)
+job_params = JobConfig(test_job_id_cloud, 4)
+job_params.get_job_params()
 
 job_et = time.time()
 
@@ -423,7 +425,7 @@ processing_st = time.time()
 new_config_test = SequenceConfigRefactor(job_params)
 new_audio_frames = SequenceAudioFrameSlicer(new_config_test) 
 validated_audio_sequence = SequenceEngine(new_config_test, new_audio_frames).generate_audio_sequence()
-AudioEngine(validated_audio_sequence, job_params.path_resolver()['local_path_processed'], normalized = True).save_to_wav()
+#AudioEngine(validated_audio_sequence, job_params.path_resolver()['local_path_processed'], normalized = True).save_to_wav()
 AudioEngine(validated_audio_sequence, job_params.path_resolver()['local_path_processed'], normalized = True).save_to_mp3()
 
 processing_et = time.time()
@@ -444,94 +446,20 @@ print('Execution time for "DOWNLOAD ASSETS":', download_elapsed_time, 'seconds')
 print('Execution time for "PROCESS":', processing_elapsed_time, 'seconds')
 print('Execution time for "UPLOAD ASSETS":', upload_elapsed_time, 'seconds')
 
-np.array(validated_audio_sequence).ndim
+x_mp3 = np.array(validated_audio_sequence)
+
+import pydub 
+import numpy as np
+
+def write(f, sr, x, normalized=False):
+    """numpy array to MP3"""
+    channels = 2 if (x.ndim == 2 and x.shape[1] == 2) else 1
+    if normalized:  # normalized array - each item should be a float in [-1, 1)
+        y = np.int16(x * 2 ** 15)
+    else:
+        y = np.int16(x)
+    song = pydub.AudioSegment(y.tobytes(), frame_rate=sr, sample_width=2, channels=channels)
+    song.export(f, format="mp3", bitrate="320k")
 
 
-#pydantic
-
-with open('environment/data.json') as f:
-    data = json.load(f)
-    
-print(data)
-
-people = [Person(**person) for person in data]
-
-people_as_json = [p.json() for p in people]
-
-class Address(BaseModel):
-    street: str
-    country: str = "USA"
-    zipcode: str 
-    
-
-class Person(BaseModel):
-    first_name: str
-    last_name: Optional[str]
-    address: Optional[Address]
-    favourite_numbers: List[int]
-    
-
-class DbSettings(BaseSettings):
-    name: str
-    ip_adress: str
-    user: Optional[str]
-    password: Optional[str]
-    
-db_setting = DbSettings(_env_file="environment/db.env", _env_file_encoding="utf-8") 
-
-
-
-### DEBUG
-
-
-bpm = job_params.get_job_params()['bpm']
-rhythm_config = job_params.get_job_params()['rythm_config_list']
-audio, sr = librosa.load(job_params.get_job_params()['local_paths'], sr=44100)
-        
-           
-one_bar = 60/bpm*4
-k=rhythm_config[1]
-pulse_length_samples = 44100*one_bar/k
-
-equal_to_total = True if (math.floor(len(audio)/pulse_length_samples)) <=1 else False
-grid_value = len(audio) \
-if equal_to_total \
-    else math.floor(len(audio)/pulse_length_samples)*pulse_length_samples-pulse_length_samples
-grid_value
-
-    
-def get_audio_frame_sequence_list(self):
-        
-    audio_frames_lengths = new_config_test.get_audio_frames_length()
-    audio_frames_reps = new_config_test.get_audio_frames_reps()  
-    unique_audio_frames_lengths = np.unique(audio_frames_lengths)
-        
-    sequence_l = []
-    for audio_lengths, audio_reps in zip(unique_audio_frames_lengths, audio_frames_reps): 
-        stop_range = (audio_lengths*audio_reps)-audio_lengths
-        if stop_range == 0:
-            stop_range = audio_lengths
-        step_range = audio_lengths
-        print(stop_range)
-        sequence_l.append(np.arange(0, stop_range, step_range))
-    return sequence_l
-     
-     
-     
-np.arange(0, 3835, 3834)
-     
-def frames_list(self, individual_frames : list, unique_frame_length : float):
-    sliced_frames = []
-        
-    audio, sr = librosa.load(self.sequence_config.job_params.get_job_params()['local_paths'], sr=44100)
-    for frame in individual_frames:
-        sliced_frames.append(audio[int(frame):int(frame)+int(unique_frame_length)])
-            #sliced_frames.append(self.sequence_config.audio[int(frame):int(frame)+int(unique_frame_length)])
-    return sliced_frames   
-        
-def get_audio_frames(self):
-    sequence_l = self.get_audio_frame_sequence_list()
-    audio_frames_lengths = self.sequence_config.get_audio_frames_length()
-    unique_audio_frames_lengths = np.unique(audio_frames_lengths)
-    audio_frames = [self.frames_list(x, y) for x, y in zip(sequence_l, unique_audio_frames_lengths)]
-    return audio_frames
+write('out2.mp3', 44100, x_mp3)
