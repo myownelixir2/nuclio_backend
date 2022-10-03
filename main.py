@@ -17,44 +17,6 @@ from collections import Counter
 import random
 import boto3
 
-def psuedo_json_to_dict(file_path):   
-    with open(file_path,'r') as lst:
-            json_psudo = json.load(lst)
-            json_sanitized = re.sub(r'("\s*:\s*)undefined(\s*[,}])', '\\1null\\2', json_psudo[0])
-            json_dict = json.loads(json_sanitized)
-    return json_dict
-        
-
-
-
-job_id_dict = psuedo_json_to_dict('test_job_id2.json')     
-
-
-
-
-local_paths = job_id_dict["local_paths"]
-cloud_paths = job_id_dict["cloud_paths"]
-bpm = job_id_dict["bpm"][0]
-scale_value = job_id_dict["scale_value"][0]
-key_value = job_id_dict["key_value"][0]
-rythm_config_list = job_id_dict["rythm_config_list"]
-pitch_temperature_knob_list = job_id_dict["pitch_temperature_knob_list"]
-
-notes_match_table = pd.read_csv('MASTER_KEY_TO_NOTE_SEQUENCE.csv', delimiter=';')
-#notes_match_table.to_pickle('notes_match_table.pkl')    #to save the dataframe, df to 123.pkl
-list(notes_match_table)
-notes_match_table.filter()
-scale_value='major'
-keynote='F Major'
-
-notes_match_table.columns.values
-
-
-sample_mp3 = '/Volumes/DATA VAULT/SAMPLE_DB_STAGING/loop__other/PITCH_B__BPM_125__Drums_Loops_LA_Drums_01_125.mp3'
-
-
-audio, sr = librosa.load(sample_mp3,sr=44100)
-len(audio)
 
 
 test_job_id_cloud = 'job_ids/2022-08-17-1660779803__1660779844-obtnscky11028TQWO.json'
@@ -64,78 +26,14 @@ os.environ["STORAGE_KEY"] = 'WATDFANJ80ZDRZSQMVQP'
 os.environ["STORAGE_SECRET"] = 'OdBo2cqzZ0hWKIbeAg49m9yS5l0iK9TP84HDlKi4'
 
 
-class SerializeInput:    
-    def __init__(self, file_path, channel_index):
-        self.file_path : str = file_path 
-        self.channel_index  : int = channel_index
 
-
-    def psuedo_json_to_dict(self):   
-        with open(self.file_path,'r') as lst:
-                json_psudo = json.load(lst)
-                json_sanitized = re.sub(r'("\s*:\s*)undefined(\s*[,}])', '\\1null\\2', json_psudo[0])
-                json_dict = json.loads(json_sanitized)
-        return json_dict
-    
-    def get_job_params(self):
-        job_id_dict = self.psuedo_json_to_dict()
-        index = self.channel_index
-        
-        params_dict = {'local_paths':job_id_dict["local_paths"][index], 
-                       'cloud_paths':job_id_dict["cloud_paths"][index], 
-                       'bpm':job_id_dict["bpm"][0], 
-                       'scale_value':job_id_dict["scale_value"][0], 
-                       'key_value':key_value, 
-                       'rythm_config_list':job_id_dict["rythm_config_list"][index], 
-                       'pitch_temperature_knob_list':job_id_dict["pitch_temperature_knob_list"][index]}
-        
-        return params_dict
-    
-test_serialized = SerializeInput('test_job_id2.json', 2).get_job_params()
+#### STORAGE ####
 
 class StorageCreds(BaseSettings):
     endpoint_url : str = Field(..., env="STORAGE_URL")
     access_key_id : str = Field(..., env="STORAGE_KEY")
     secret_access_key : str = Field(..., env="STORAGE_SECRET")
- 
- 
-creds = StorageCreds()
 
-
-
-
-class FileLocation:
-    def __init__(self, job_id):
-        self.job_id = job_id
-        
-    def path_resolver(self):
-        sanitized_job_id = self.job_id.split('/')[1].replace('.json','')
-        local_path = f'temp/{sanitized_job_id}.json'
-        local_path_processed = f'temp/sequences_{sanitized_job_id}.wav'
-        cloud_path_processed = f'sequences/{sanitized_job_id}.wav'
-        paths_dict = {'cloud_path': self.job_id, 
-                'local_path': local_path, 
-                'local_path_processed': local_path_processed, 
-                'cloud_path_processed': cloud_path_processed}
-        return paths_dict
-    
-            
-
-
-
-job_config = FileLocation('job_ids/1234567890.json').path_resolver()
-
-('job_id_path', 'processed_job_path', 'asset_path')
-
-class JobTypeValidator(BaseModel):
-    job_type : Literal['job_id_path', 'processed_job_path', 'asset_path']
-    
-    @validator('job_type')
-    def job_type_validator(cls, v):
-        if v not in ['job_id_path', 'processed_job_path', 'asset_path']:
-            raise ValueError('job_type must be either "single" or "batch"')
-        return v
-  
 
 class StorageEngine:
     
@@ -194,13 +92,69 @@ class StorageEngine:
             print(e)
             return False
 
+
+ 
+#### JOB CONFIG ####
+
+class JobTypeValidator(BaseModel):
+    job_type : Literal['job_id_path', 'processed_job_path', 'asset_path']
+    
+    @validator('job_type')
+    def job_type_validator(cls, v):
+        if v not in ['job_id_path', 'processed_job_path', 'asset_path']:
+            raise ValueError('job_type must be either "single" or "batch"')
+        return v
+  
+
+class JobConfigValidator(BaseModel):
+    index_value: int = Field(..., ge=0, le=5)
+    
+    @validator('index_value')
+    def item_validator(cls, v):
+        if v not in [0,1,2,3,4,5]:
+            raise ValueError('index must be between 0 and 5')
+        return v
+
+class JobConfig:
+    def __init__(self, job_id, channel_index):
+        self.job_id = job_id
+        self.channel_index = channel_index
         
-class StorageAccessError():
-    pass
-
-class SequenceConfigError():
-    pass
-
+    def path_resolver(self):
+        sanitized_job_id = self.job_id.split('/')[1].replace('.json','')
+        local_path = f'temp/{sanitized_job_id}.json'
+        local_path_processed = f'temp/sequences_{sanitized_job_id}.mp3'
+        cloud_path_processed = f'sequences/{sanitized_job_id}.mp3'
+        paths_dict = {'cloud_path': self.job_id, 
+                'local_path': local_path, 
+                'local_path_processed': local_path_processed, 
+                'cloud_path_processed': cloud_path_processed}
+        return paths_dict
+    
+    def __psuedo_json_to_dict(self):
+        paths = self.path_resolver()
+        with open(paths['local_path'],'r') as lst:
+                json_psudo = json.load(lst)
+                json_sanitized = re.sub(r'("\s*:\s*)undefined(\s*[,}])', '\\1null\\2', json_psudo[0])
+                json_dict = json.loads(json_sanitized)
+        return json_dict
+    
+    def get_job_params(self):
+        job_id_dict = self.__psuedo_json_to_dict()
+        
+        _check_index = JobConfigValidator.parse_obj({'index_value': self.channel_index})
+        
+        params_dict = {'local_paths':job_id_dict["local_paths"][_check_index.index_value], 
+                       'cloud_paths':job_id_dict["cloud_paths"][_check_index.index_value], 
+                       'bpm':job_id_dict["bpm"][0], 
+                       'scale_value':job_id_dict["scale_value"][0], 
+                       'key_value':key_value, 
+                       'rythm_config_list':job_id_dict["rythm_config_list"][_check_index.index_value], 
+                       'pitch_temperature_knob_list':job_id_dict["pitch_temperature_knob_list"][_check_index.index_value]}
+        
+        return params_dict
+     
+#### SEQUENCE ENGINE ####
 
 class SequenceConfigRefactor:
     def __init__(self, job_params):
@@ -290,83 +244,6 @@ class SequenceConfigRefactor:
         return audio_frame_rep_nr
  
 
-class SequenceConfig:
-    def __init__(self, audio, rhythm_config, pitch_temperature, bpm, scale_value, keynote):
-        self.audio = audio 
-        self.rhythm_config : list = rhythm_config
-        self.pitch_temperature : int = pitch_temperature
-        self.bpm : int = bpm
-        self.scale_value: str = scale_value
-        self.keynote: str = keynote 
-        
-    def euclead_rhythm_generator(self) -> list:
-        n : int = self.rhythm_config[0]
-        k : int  = self.rhythm_config[1]
-        data = [[1 if i < n else 0] for i in range(k)]
-        while True:           
-            k = k - n
-            if k <= 1:
-                break
-            elif k < n:
-                n, k = k, n
-            for i in range(n):
-                data[i] += data[-1]
-                del data[-1]  
-        return [x for y in data for x in y] 
-
-    def get_note_sequence(self) -> list:
-        notes_match_table = pd.read_pickle('notes_match_table.pkl')
-        notes_sequence_raw = notes_match_table.query("scale_name==@self.scale_value & key==@self.keynote").filter(['notes'])
-        
-        notes_sequence_extracted_str = notes_sequence_raw["notes"].values[0].split(", ")
-        notes_sequence_extracted_int = [int(i) for i in notes_sequence_extracted_str]
-        notes_sequence_extracted_int_octave_down = [(i-12) for i in notes_sequence_extracted_int]
-        
-        notes_sequence_complete = notes_sequence_extracted_int_octave_down + notes_sequence_extracted_int 
-        return notes_sequence_complete
-     
-    def grid_validate(self):
-        """
-        check if onset is equal 
-        to total length of the sample track
-        """
-        one_bar = 60/self.bpm*4
-        k=self.rhythm_config[1]
-        pulse_length_samples = 44100*one_bar/k
-        
-        equal_to_total = True if (math.floor(len(self.audio)/pulse_length_samples)) <=1 else False
-        grid_value = len(self.audio) \
-            if equal_to_total \
-                else math.floor(len(self.audio)/pulse_length_samples)*pulse_length_samples-pulse_length_samples
-        return grid_value, pulse_length_samples
-    
-    
-    def get_audio_frames_length(self) -> list:  
-        pulse_sequence=self.euclead_rhythm_generator()
-        __, pulse_length_samples = self.grid_validate()
-        
-        onsets_loc = [i for i, e in enumerate(pulse_sequence) if e == 1]
-        onsets_loc_arr = np.array(onsets_loc)
-        silence_loc_arr_temp = np.subtract(onsets_loc_arr[1:], 1)
-        silence_loc_arr = np.append(silence_loc_arr_temp, len(pulse_sequence)-1)
-        
-        audio_frames_lengths = []
-        for onsets, silence in zip(onsets_loc_arr, silence_loc_arr):
-            #print(len(pulse_sequence[onsets:silence]))
-            audio_frames_lengths.append((silence-onsets+1)*pulse_length_samples)
-        return audio_frames_lengths
-    
-    def get_audio_frames_reps(self) -> list:
-        grid_value, __ = self.grid_validate()
-        audio_frames_lens = self.get_audio_frames_length()
-        unique_audio_frame_lengths = np.unique(audio_frames_lens)
-        
-        audio_frame_rep_nr = []
-        for i in range(len(unique_audio_frame_lengths)):
-            audio_frame_rep_nr.append(grid_value/unique_audio_frame_lengths[i])
-        return audio_frame_rep_nr
- 
-
 class SequenceAudioFrameSlicer:
     def __init__(self, sequence_config):
        
@@ -410,36 +287,6 @@ class SequenceAudioFrameSlicer:
         return audio_frames
 
  
-class AudioFrameSlicer(SequenceConfig):
-    def __init__(self, audio, rhythm_config, pitch_temperature, bpm, scale_value, keynote):
-        super().__init__(audio, rhythm_config, pitch_temperature, bpm, scale_value, keynote)    
-    
-    def get_audio_frame_sequence_list(self):
-        audio_frames_lengths = super().get_audio_frames_length()
-        audio_frames_reps = super().get_audio_frames_reps()
-        unique_audio_frames_lengths = np.unique(audio_frames_lengths)
-        
-        sequence_l = []
-        for audio_lengths, audio_reps in zip(unique_audio_frames_lengths, audio_frames_reps): 
-            stop_range = (audio_lengths*audio_reps)-audio_lengths
-            step_range = audio_lengths
-            sequence_l.append(np.arange(0, stop_range, step_range))
-        return sequence_l
-     
-    def frames_list(self, individual_frames : list, unique_frame_length : float):
-            sliced_frames = []
-            for frame in individual_frames:
-                sliced_frames.append(self.audio[int(frame):int(frame)+int(unique_frame_length)])
-            return sliced_frames   
-        
-    def get_audio_frames(self):
-        sequence_l = self.get_audio_frame_sequence_list()
-        audio_frames_lengths = super().get_audio_frames_length()
-        unique_audio_frames_lengths = np.unique(audio_frames_lengths)
-        audio_frames = [self.frames_list(x, y) for x, y in zip(sequence_l, unique_audio_frames_lengths)]
-        return audio_frames
-     
- 
 class SequenceEngine:
     def __init__(self, sequence_config, audio_frames):
         self.audio_frames = audio_frames
@@ -461,6 +308,8 @@ class SequenceEngine:
             empty_array = np.zeros(original_sample_len-new_sequence_len)
             
             validated_sequence = np.append(new_sequence_unpacked, empty_array)
+        else:
+            validated_sequence = new_sequence_unpacked
         return validated_sequence
     
     
@@ -519,7 +368,8 @@ class SequenceEngine:
         for i in range(len(audio_frames)):
             audio_frames_sequence.append(np.random.choice(audio_frames[i], int(unique_audio_frames_lengths[i]), replace=False))
         return self.__unpack_multi_level_list(audio_frames_sequence)
-    
+
+##### AUDIO ENGINE #####    
 
 class AudioEngine:
     
@@ -541,7 +391,7 @@ class AudioEngine:
         
     def save_to_mp3(self):
         try:
-            channels = 2 if (self.audio_sequence.ndim == 2 and self.audio_sequence.shape[1] == 2) else 1
+            channels = 2 if (np.array(self.audio_sequence).ndim == 2 and np.array(self.audio_sequence).shape[1] == 2) else 1
             if self.normalized:  # normalized array - each item should be a float in [-1, 1)
                 y = np.int16(self.audio_sequence * 2 ** 15)
             else:
@@ -552,84 +402,49 @@ class AudioEngine:
             print("Error converting to mp3", e)
             raise e
     
-    
-class JobConfig:
-    def __init__(self, job_id, channel_index):
-        self.job_id = job_id
-        self.channel_index = channel_index
-        
-    def path_resolver(self):
-        sanitized_job_id = self.job_id.split('/')[1].replace('.json','')
-        local_path = f'temp/{sanitized_job_id}.json'
-        local_path_processed = f'temp/sequences_{sanitized_job_id}.wav'
-        cloud_path_processed = f'sequences/{sanitized_job_id}.wav'
-        paths_dict = {'cloud_path': self.job_id, 
-                'local_path': local_path, 
-                'local_path_processed': local_path_processed, 
-                'cloud_path_processed': cloud_path_processed}
-        return paths_dict
-    
-    def __psuedo_json_to_dict(self):
-        paths = self.path_resolver()
-        with open(paths['local_path'],'r') as lst:
-                json_psudo = json.load(lst)
-                json_sanitized = re.sub(r'("\s*:\s*)undefined(\s*[,}])', '\\1null\\2', json_psudo[0])
-                json_dict = json.loads(json_sanitized)
-        return json_dict
-    
-    def get_job_params(self):
-        job_id_dict = self.__psuedo_json_to_dict()
-        
-        
-        params_dict = {'local_paths':job_id_dict["local_paths"][self.channel_index], 
-                       'cloud_paths':job_id_dict["cloud_paths"][self.channel_index], 
-                       'bpm':job_id_dict["bpm"][0], 
-                       'scale_value':job_id_dict["scale_value"][0], 
-                       'key_value':key_value, 
-                       'rythm_config_list':job_id_dict["rythm_config_list"][self.channel_index], 
-                       'pitch_temperature_knob_list':job_id_dict["pitch_temperature_knob_list"][self.channel_index]}
-        
-        return params_dict
-     
 
 
    
 #WORKING ON THIS CLASS 
 #initialize classes
+import time
+job_st = time.time()
 
+job_params = JobConfig(test_job_id_cloud, 5)
 
-job_params = JobConfig(test_job_id_cloud, 3)
+job_et = time.time()
 
-
+download_st = time.time()
 StorageEngine(job_params,'job_id_path').get_object()
 StorageEngine(job_params,'asset_path').get_object()
+download_et = time.time()
 
-job_params.get_job_params()
-
+processing_st = time.time()
 new_config_test = SequenceConfigRefactor(job_params)
-new_config_test.grid_validate()
-new_config_test.get_audio_frames_length()
-new_config_test.get_audio_frames_reps()
-
-
-
-#new_config = SequenceConfig(audio, rythm_config_list[0], pitch_temperature_knob_list[0], bpm, scale_value, key_value)      
-
-
 new_audio_frames = SequenceAudioFrameSlicer(new_config_test) 
-
-new_audio_frames.get_audio_frame_sequence_list()
-new_audio_frames.get_audio_frames()
-
 validated_audio_sequence = SequenceEngine(new_config_test, new_audio_frames).generate_audio_sequence()
+AudioEngine(validated_audio_sequence, job_params.path_resolver()['local_path_processed'], normalized = True).save_to_wav()
+AudioEngine(validated_audio_sequence, job_params.path_resolver()['local_path_processed'], normalized = True).save_to_mp3()
 
+processing_et = time.time()
 
-sf.write('test9.wav', validated_audio_sequence, 44100)
+upload_st = time.time()
+StorageEngine(job_params,'processed_job_path').upload_object()
 
-len(validated_audio_sequence)
+upload_et = time.time()
 
+# get the execution time
+job_elapsed_time = job_et - job_st
+download_elapsed_time = download_et - download_st
+processing_elapsed_time = processing_et - processing_st
+upload_elapsed_time = upload_et - upload_st
 
+print('Execution time for "JOB SPECS":', job_elapsed_time, 'seconds')
+print('Execution time for "DOWNLOAD ASSETS":', download_elapsed_time, 'seconds')
+print('Execution time for "PROCESS":', processing_elapsed_time, 'seconds')
+print('Execution time for "UPLOAD ASSETS":', upload_elapsed_time, 'seconds')
 
+np.array(validated_audio_sequence).ndim
 
 
 #pydantic
