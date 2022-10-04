@@ -65,8 +65,9 @@ class StorageEngine:
             return d_paths
         else:
             asset_paths = self.job_config.get_job_params()
+            local_paths = f'app/sequences_generator/{asset_paths["local_path"]}'
             d_paths = {'cloud_path': asset_paths['cloud_paths'],
-            'local_path': asset_paths['local_paths']}
+            'local_path': local_paths}
             return d_paths
             
        
@@ -122,8 +123,8 @@ class JobConfig:
         
     def path_resolver(self):
         sanitized_job_id = self.job_id.split('/')[1].replace('.json','')
-        local_path = f'temp/{sanitized_job_id}.json'
-        local_path_processed = f'temp/sequences_{sanitized_job_id}_{self.channel_index}.mp3'
+        local_path = f'app/sequence_generator/temp/{sanitized_job_id}.json'
+        local_path_processed = f'app/sequence_generator/temp/sequences_{sanitized_job_id}_{self.channel_index}.mp3'
         cloud_path_processed = f'sequences/{sanitized_job_id}_{self.channel_index}.mp3'
         paths_dict = {'cloud_path': self.job_id, 
                 'local_path': local_path, 

@@ -20,7 +20,7 @@ async def get_sequence(job_id: str, channel_index: int):
         logger.info('Starting to build sequence...')
         job = JobRunner(job_id, channel_index)
         res = job.execute()
-        processed_job_id = job.result(res)
+        processed_job_id = await job.result(res)
         logger.info('Finished building sequence...')
         return processed_job_id
     except Exception as e:
