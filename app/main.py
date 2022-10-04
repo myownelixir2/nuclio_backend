@@ -1,7 +1,7 @@
 from typing import Union
 from fastapi import FastAPI
 import os
-from app.helper.listener_utils import *
+from app.sequence_generator.generator import *
 import logging
 
 # logger config
@@ -14,13 +14,17 @@ app = FastAPI()
 def home():
   return os.getcwd()
    
-@app.post('/get_snapshot')
-def get_snapshot():
-  build_snapshot()
-  logger.info('Snapshot build...')
-  ts=int(time.time())
-  dest_file=str(ts) + '_' + 'database_snapshot.csv'
-  upload_object('database_snapshot.csv', dest_file)
-  logger.info('Snapshot uploaded...')
-  status_='succes'
-  return status_
+@app.post('/get_sequence')
+async def get_sequence(job_id: str, channel_index: int):
+    try:
+        logger.info('Starting to build sequence...')
+        job = JobRunner(job_id, channel_index)
+        res = job.execute()
+        processed_job_id = job.result(res)
+        logger.info('Finished building sequence...')
+        return processed_job_id
+    except Exception as e:
+        logger.error(e)
+        return e
+    
+  
