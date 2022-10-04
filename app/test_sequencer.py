@@ -16,7 +16,6 @@ from pydantic import BaseModel, Field, BaseSettings, validator, SecretStr
 from collections import Counter
 import random
 import boto3
-import glob
 
 
 
@@ -66,10 +65,10 @@ class StorageEngine:
             return d_paths
         else:
             asset_paths = self.job_config.get_job_params()
-            #local_paths = asset_paths['local_paths']
-            #local_paths_sanitized = f'app/sequence_generator/{local_paths}'
+            local_paths = asset_paths['local_paths']
+            local_paths_sanitized = f'app/sequence_generator/{local_paths}'
             d_paths = {'cloud_path': asset_paths['cloud_paths'],
-            'local_path': asset_paths['local_paths']}
+            'local_path': local_paths_sanitized}
             return d_paths
             
        
@@ -79,15 +78,6 @@ class StorageEngine:
             bucket = client.Bucket('sample-dump')
             _type = self.__resolve_type()
             bucket.download_file(_type['cloud_path'], _type['local_path'])
-            return True
-        except Exception as e:
-            print(e)
-            return False
-    
-    def delete_local_object(self):
-        try:
-            _type = self.__resolve_type()
-            os.remove(_type['local_path'])
             return True
         except Exception as e:
             print(e)
@@ -128,14 +118,14 @@ class JobConfigValidator(BaseModel):
         return v
 
 class JobConfig:
-    def __init__(self, job_id: str, channel_index: int):
+    def __init__(self, job_id, channel_index):
         self.job_id = job_id
         self.channel_index = channel_index
         
     def path_resolver(self):
         sanitized_job_id = self.job_id.split('/')[1].replace('.json','')
-        local_path = f'temp/{sanitized_job_id}.json'
-        local_path_processed = f'temp/sequences_{sanitized_job_id}_{self.channel_index}.mp3'
+        local_path = f'app/sequence_generator/temp/{sanitized_job_id}.json'
+        local_path_processed = f'app/sequence_generator/temp/sequences_{sanitized_job_id}_{self.channel_index}.mp3'
         cloud_path_processed = f'sequences/{sanitized_job_id}_{self.channel_index}.mp3'
         paths_dict = {'cloud_path': self.job_id, 
                 'local_path': local_path, 
@@ -193,7 +183,7 @@ class SequenceConfigRefactor:
         scale_value = self.job_params.get_job_params()['scale_value']
         keynote = self.job_params.get_job_params()['key_value']
         
-        notes_match_table = pd.read_pickle('app/sequence_generator/notes_match_table.pkl')
+        notes_match_table = pd.read_pickle('notes_match_table.pkl')
         notes_sequence_raw = notes_match_table.query("scale_name==@scale_value & key==@keynote").filter(['notes'])
         
         notes_sequence_extracted_str = notes_sequence_raw["notes"].values[0].split(", ")
@@ -449,17 +439,7 @@ class JobRunner:
         except Exception as e:
             print(e)
             return print('Error')
-    
-    def clean_up(self):
-        self.job_params = JobConfig(self.job_id, self.channel_index)
-        
-        try:
-            #StorageEngine(self.job_params,'job_id_path').delete_local_object()
-            StorageEngine(self.job_params,'asset_path').delete_local_object()
-            StorageEngine(self.job_params,'processed_job_path').delete_local_object()
-        except Exception as e:
-            print(e)
-    
+     
     def execute(self):
         self.job_params = JobConfig(self.job_id, self.channel_index)
         
@@ -469,12 +449,7 @@ class JobRunner:
             
             AudioEngine(validated_audio, self.job_params.path_resolver()['local_path_processed'], normalized = True).save_to_mp3()
             StorageEngine(self.job_params,'processed_job_path').upload_object()
-            
-
-            
             return True
         except Exception as e:
             print(e)
             return False
-   
-
