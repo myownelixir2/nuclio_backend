@@ -3,9 +3,6 @@ from fastapi import FastAPI
 import os
 import logging
 from app.sequence_generator.generator import *
-from app.storage.storage import *
-from app.utils.utils import *
-
 
 
 # logger config
@@ -40,7 +37,7 @@ def get_sequence(job_id: str, channel_index: int):
         processed_job_id = job.result(res)
         logger.info('Finished building sequence...')
         
-        job.clean_up()
+        #job.clean_up()
         logger.info('clean up done...')
         
         return processed_job_id

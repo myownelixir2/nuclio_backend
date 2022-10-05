@@ -17,8 +17,7 @@ from collections import Counter
 import random
 import boto3
 import glob
-
-
+from app.storage.storage import *
 
 
 #test_job_id_cloud = 'job_ids/2022-08-17-1660779803__1660779844-obtnscky11028TQWO.json'
