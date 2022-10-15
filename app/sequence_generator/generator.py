@@ -164,10 +164,9 @@ class SequenceEngine:
     def __init__(self, sequence_config, audio_frames):
         self.audio_frames = audio_frames
         self.sequence_config = sequence_config   
-
-    def __validate_sequence(self, new_sequence):
-        
-        bpm = self.sequence_config.job_params.get_job_params()['bpm']
+    
+    @staticmethod
+    def validate_sequence(bpm, new_sequence):  
         
         one_bar = 60/bpm*4
         original_sample_len = round(44100*one_bar/1)
@@ -228,9 +227,12 @@ class SequenceEngine:
         note_sequence = self.sequence_config.get_note_sequence()
         note_sequence_updated = random.choices(note_sequence, k = len(new_sequence_unlisted))
         
+        bpm = self.sequence_config.job_params.get_job_params()['bpm']
+        
         updated_new_audio_sequence = self.__apply_pitch_shift(new_sequence_unlisted, note_sequence_updated)
-        validated_audio_sequence = self.__validate_sequence(updated_new_audio_sequence)
-        return validated_audio_sequence
+        validated_audio_sequence = self.validate_sequence(bpm, updated_new_audio_sequence)
+        
+        return validated_audio_sequence, updated_new_audio_sequence
     
     def generate_audio_sequence_auto(self):
         audio_frames = self.audio_frames.get_audio_frames()
@@ -254,6 +256,18 @@ class AudioEngine:
     def read_audio(self):
         return librosa.load(self.file_loc, sr=44100)
     
+    def save_to_pkl(self):
+        try:
+            my_file = self.file_loc
+            my_pkl = my_file.replace('.mp3', '.pkl')
+            with open(my_pkl,"wb") as f:
+                pickle.dump(self.audio_sequence, f)
+           
+        except Exception as e:
+            print(e)
+            print('Could not save to pkl')
+            
+    
     def save_to_wav(self):
         try:
             sf.write(self.file_loc, self.audio_sequence, 44100)
@@ -261,7 +275,7 @@ class AudioEngine:
         except Exception as e:
             print("Error converting to wav", e)
             raise e
-    #TODO
+
     def save_to_mp3(self):
         try:
             audio_seq_array = np.array(self.audio_sequence)
@@ -279,9 +293,10 @@ class AudioEngine:
 #### RUN JOB ####
 
 class JobRunner:
-    def __init__(self, job_id, channel_index):
+    def __init__(self, job_id, channel_index, random_id):
         self.job_id = job_id
         self.channel_index = channel_index
+        self.random_id = random_id
        
     def get_assets(self):
         try:
@@ -292,10 +307,12 @@ class JobRunner:
     
     def validate(self):
         try:
+            
             new_config_test = SequenceConfigRefactor(self.job_params)
             new_audio_frames = SequenceAudioFrameSlicer(new_config_test) 
-            validated_audio_sequence = SequenceEngine(new_config_test, new_audio_frames).generate_audio_sequence()
-            return validated_audio_sequence
+            validated_audio_sequence, audio_sequence = SequenceEngine(new_config_test, new_audio_frames).generate_audio_sequence()
+            
+            return validated_audio_sequence, audio_sequence
         except Exception as e:
             print(e)  
             return False 
@@ -312,7 +329,7 @@ class JobRunner:
             return print('Error')
     
     def clean_up(self):
-        self.job_params = JobConfig(self.job_id, self.channel_index)
+        self.job_params = JobConfig(self.job_id, self.channel_index, self.random_id)
         
         try:
             #StorageEngine(self.job_params,'job_id_path').delete_local_object()
@@ -322,16 +339,16 @@ class JobRunner:
             print(e)
     
     def execute(self):
-        self.job_params = JobConfig(self.job_id, self.channel_index)
+        self.job_params = JobConfig(self.job_id, self.channel_index, self.random_id)
         
         self.get_assets()
-        validated_audio = self.validate()
+        validated_audio, audio_sequence = self.validate()
+        
         try:
-            
+            #print(self.job_params.path_resolver()['local_path_mixdown_pkl'])
+            AudioEngine(audio_sequence, self.job_params.path_resolver()['local_path_processed_pkl'], normalized = None).save_to_pkl()
             AudioEngine(validated_audio, self.job_params.path_resolver()['local_path_processed'], normalized = True).save_to_mp3()
             StorageEngine(self.job_params,'processed_job_path').upload_object()
-            
-
             
             return True
         except Exception as e:
