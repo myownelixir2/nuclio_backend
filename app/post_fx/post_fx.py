@@ -21,6 +21,7 @@ import glob
 import sox
 from app.sequence_generator.generator import *
 
+
 #fx_input = '2_4_1_6_1_5'
 #index = '1_2_5_6_4_1'
 #selective_mutism_switch= 'T'
@@ -126,8 +127,8 @@ class VolEngine:
      
     def apply_volume(self):
         
-        channel_index = job_params.channel_index
-        bpm = job_params.get_job_params()['bpm']
+        channel_index = self.job_params.channel_index
+        bpm = self.job_params.get_job_params()['bpm']
 
         my_sequence_unpacked = SequenceEngine.validate_sequence(self.pre_processed_sequence, bpm)
         #my_sequence_unpacked = [item for sublist in self.pre_processed_sequence for item in sublist]
@@ -143,8 +144,6 @@ class VolEngine:
             
         return my_sequence_vol_applied
     
-
-
 
 class FxEngine:
     def __init__(self, mix_params, job_params, my_sequence):
@@ -216,10 +215,45 @@ class FxEngine:
                 print(e)
                 return False
 
-            
-            
+
+
+class FxRunner:
+    def __init__(self, mix_params, job_id, channel_index, random_id):
+        self.mix_params = mix_params
+        self.job_id = job_id
+        self.channel_index = channel_index
+        self.random_id = random_id       
     
+    def clean_up(self):
+
+        try:
+            #StorageEngine(self.job_params,'job_id_path').delete_local_object()
+            StorageEngine(self.job_params,'mixdown_job_path_pkl').delete_local_object()
+            StorageEngine(self.job_params,'mixdown_job_path').delete_local_object()
+        except Exception as e:
+            print(e)
+        
     
+    def execute(self):
+        self.job_params = JobConfig(self.job_id, self.channel_index, self.random_id)
+        
+        try:
+            
+            sequence_mute_applied = MuteEngine(self.mix_params, self.job_params).apply_selective_mutism()
+            sequence_vol_applied = VolEngine(self.mix_params, self.job_params, sequence_mute_applied).apply_volume()
+            sequence_ready = FxEngine(self.mix_params, self.job_params, sequence_vol_applied).apply_fx()
+            
+            if sequence_ready:
+                print('Sequence ready')
+                StorageEngine(self.job_params,'mixdown_job_path').upload_object()
+                return True
+            else:
+                print('Sequence not ready')
+                return False
+            
+        except Exception as e:
+            print(e)
+
         
     
      

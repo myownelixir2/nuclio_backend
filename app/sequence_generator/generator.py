@@ -23,8 +23,9 @@ from app.storage.storage import *
 #test_job_id_cloud = 'job_ids/2022-08-17-1660779803__1660779844-obtnscky11028TQWO.json'
 
 os.environ["STORAGE_URL"] = 'https://s3.eu-central-1.wasabisys.com'
-os.environ["STORAGE_KEY"] = 'WATDFANJ80ZDRZSQMVQP'
-os.environ["STORAGE_SECRET"] = 'OdBo2cqzZ0hWKIbeAg49m9yS5l0iK9TP84HDlKi4'
+os.environ["STORAGE_KEY"] = 'P80MDNX2GDE4GEI5AHVU'
+os.environ["STORAGE_SECRET"] = 'oqmjbR5EXRjRB880IwE6WNj5DY8EoLbpsOYiI9BW'
+
 
      
 #### SEQUENCE ENGINE ####
@@ -321,6 +322,7 @@ class JobRunner:
         try:
             if result == True:
                 cloud_path = self.job_params.path_resolver()['cloud_path_processed']
+                #TODO check if file exists
                 return cloud_path
             else:
                 return print('Job failed')
