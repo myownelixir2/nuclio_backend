@@ -14,6 +14,18 @@ class StorageCreds(BaseSettings):
     access_key_id: str = Field(..., env="STORAGE_KEY")
     secret_access_key: str = Field(..., env="STORAGE_SECRET")
 
+    @validator('endpoint_url', 'access_key_id', 'secret_access_key')
+    def creds_validator(cls, v):
+
+        if v is None:
+            raise ValueError(
+                'endpoint_url, access_key_id and secret_access_key must be set')
+        return v
+
+
+
+
+
 
 class StorageEngine:
 
@@ -22,12 +34,16 @@ class StorageEngine:
         self.asset_type = asset_type
 
     def client_init(self):
-        self.client = boto3.resource('s3',
-                                     endpoint_url=StorageCreds().endpoint_url,
-                                     aws_access_key_id=StorageCreds().access_key_id,
-                                     aws_secret_access_key=StorageCreds().secret_access_key
-                                     )
-        return self.client
+        try:
+            self.client = boto3.resource('s3',
+                                        endpoint_url=StorageCreds().endpoint_url,
+                                        aws_access_key_id=StorageCreds().access_key_id,
+                                        aws_secret_access_key=StorageCreds().secret_access_key
+                                        )
+            return self.client
+        except Exception as e:
+            print(e)
+            return True
 
     def __resolve_type(self):
         job_paths = self.job_config.path_resolver()
@@ -45,6 +61,10 @@ class StorageEngine:
         elif _check.job_type == 'mixdown_job_path':
             d_paths = {'cloud_path': job_paths['cloud_path_mixdown_mp3'],
                        'local_path': job_paths['local_path_mixdown_mp3']}
+            return d_paths
+        elif _check.job_type == 'mixdown_job_path_master':
+            d_paths = {'cloud_path': job_paths['cloud_path_mixdown_mp3_master'],
+                       'local_path': job_paths['local_path_mixdown_mp3_master']}
             return d_paths
         elif _check.job_type == 'mixdown_job_path_pkl':
             d_paths = {'cloud_path': job_paths['cloud_path_mixdown_pkl'],

@@ -1,0 +1,9 @@
+# keep temp folder
+temp/**
+!temp/**/
+!temp/**/.gitkeep
+
+# keep assets folder
+assets/**
+!assets/**/
+!assets/**/.gitkeep

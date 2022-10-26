@@ -16,11 +16,10 @@ from collections import Counter
 import random
 import boto3
 import glob
-from app.storage.storage import *
+from app.post_fx.post_fx import *
 
 class MixEngine:
-    def __init__(self, mix_params, job_params):
-        self.mix_params = mix_params
+    def __init__(self, job_params):
         self.job_params = job_params
         
     def mix_sequences(self):
@@ -38,11 +37,42 @@ class MixEngine:
             print('returned value:', returned_value)
                 
             if os.path.exists(output_file):
-                return True
                 print('sequences mixed')
+                return True
             else:
+                print('Something went wrong')
                 return False
         except Exception as e:
             print(e)
             return False
+
+
+class MixRunner:
+    def __init__(self, job_id, random_id,):
+        self.job_id = job_id
+        self.random_id = random_id
         
+    def clean_up(self):
+        try:
+            current_sequences_list = glob.glob(f'temp/*')
+            [os.remove(f) for f in current_sequences_list]
+
+            return True
+        except Exception as e:
+            print(e)
+            return False 
+        
+    def execute(self):
+        try:
+            job_params = JobConfig(self.job_id, 0, self.random_id)
+            mix_ready = MixEngine(job_params).mix_sequences()
+            if mix_ready:
+                StorageEngine(job_params,'mixdown_job_path_master').upload_object()
+            else:
+                print('something went wrong')
+            
+            return True
+        except Exception as e:
+            print(e)
+            return False
+
