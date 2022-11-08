@@ -95,7 +95,7 @@ def apply_fx(job_id: str,
         
         print(res)
         
-        mixdown_file = Path(job_params.path_resolver()['local_path_pre_mixdown_mp3'])
+        mixdown_file = Path(job_params.path_resolver()['local_path_mixdown_pkl'])
         mixdown_file.resolve(strict=True)     
     
     except FileNotFoundError:

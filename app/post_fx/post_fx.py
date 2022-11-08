@@ -166,7 +166,7 @@ class FxPedalBoardEngine:
        
     def apply_pedalboard_fx(self):
         
-        fx_mapping = ['Bitcrush', 'Chorus', 'Delay', 'Flanger', 'Phaser', 'Reverb', 'Distortion']
+        fx_mapping = ['Bitcrush', 'Chorus', 'Delay', 'Phaser', 'Reverb', 'Distortion']
         
         channel_index = int(self.job_params.channel_index)
         fx_input = self.mix_params.fx_input[channel_index]
@@ -178,10 +178,10 @@ class FxPedalBoardEngine:
         else:
             fx = fx_mapping[int(fx_input)]
         
-            validated_fx = FxPedalBoardConfig(fx)
+            validated_fx = FxPedalBoardConfig.parse_obj({'audio_fx': fx}) 
         
-            pedalboard_fx = getattr(pedalboard, validated_fx)
-            board = pedalboard.Pedalboard([pedalboard_fx])
+            pedalboard_fx = getattr(pedalboard, validated_fx.audio_fx)
+            board = pedalboard.Pedalboard([pedalboard_fx()])
         
             try:
                 effected = board(self.my_sequence, 44100.0)
