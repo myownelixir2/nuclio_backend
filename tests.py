@@ -764,48 +764,182 @@ class JobRunner:
             print(e)
             return False
    
+   
+class FxPedalBoardConfig(BaseModel):
+    audio_fx : str
+    
+    @validator('audio_fx')
+    def audio_fx_validator(cls, v):
+        if v not in ['Bitcrush','Chorus','Delay','Flanger','Phaser','Reverb']:
+            raise ValueError('not allowed FX input')
+        return v
+
+class JobTypeValidator(BaseModel):
+    job_type: Literal['job_id_path', 'processed_job_path',
+                      'asset_path', 'mixdown_job_path', 'mixdown_job_path_pkl']
+
+    @validator('job_type')
+    def job_type_validator(cls, v):
+        if v not in ['job_id_path', 'processed_job_path', 'asset_path', 'mixdown_job_path', 'mixdown_job_path_master', 'mixdown_job_path_pkl']:
+            raise ValueError(
+                'job_type must be either "job_id_path", "processed_job_path", "asset_path", "mixdown_job_path" or "mixdown_job_path_pkl" or "mixdown_job_path_master"')
+        return v
+
+
+JobTypeValidator('test')
+
+FxPedalBoardConfig('Bitcrush')
+
+class FxPedalBoardEngine:
+    def __init__(self, mix_params, job_params, my_sequence):
+        self.mix_params = mix_params
+        self.job_params = job_params
+        self.my_sequence = my_sequence
+       
+    def apply_pedalboard_fx(self):
+        
+        fx_mapping = ['Bitcrush', 'Chorus', 'Delay', 'Flanger', 'Phaser', 'Reverb', 'Distortion']
+        
+        channel_index = int(self.job_params.channel_index)
+        fx_input = self.mix_params.fx_input[channel_index]
+        
+        if fx_input == 'None':
+            print('No FX applied')
+            AudioEngine(self.my_sequence, self.job_params.path_resolver()['local_path_mixdown_pkl'], normalized = True).save_to_pkl()
+            return True
+        else:
+            fx = fx_mapping[int(fx_input)]
+        
+            validated_fx = FxPedalBoardConfig(fx)
+        
+            pedalboard_fx = getattr(pedalboard, validated_fx)
+            board = pedalboard.Pedalboard([pedalboard_fx])
+        
+            try:
+                effected = board(self.my_sequence, 44100.0)
+            except Exception as e:
+                print(e)
+                return False
+
+            else:
+                y_effected = np.int16(effected * 2 ** 15)
+                AudioEngine(y_effected, self.job_params.path_resolver()['local_path_mixdown_pkl'], normalized = True).save_to_pkl()
+                return True
+            
+    
+class FxRunner:
+    def __init__(self, mix_params, job_id, channel_index, random_id):
+        self.mix_params = mix_params
+        self.job_id = job_id
+        self.channel_index = channel_index
+        self.random_id = random_id       
+    
+    def clean_up(self):
+
+        try:
+            #StorageEngine(self.job_params,'job_id_path').delete_local_object()
+            StorageEngine(self.job_params,'mixdown_job_path_pkl').delete_local_object()
+            StorageEngine(self.job_params,'mixdown_job_path').delete_local_object()
+        except Exception as e:
+            print(e)
+        
+    
+    def execute(self):
+        self.job_params = JobConfig(self.job_id, self.channel_index, self.random_id)
+        
+        try:
+            
+            sequence_mute_applied = MuteEngine(self.mix_params, self.job_params).apply_selective_mutism()
+            sequence_vol_applied = VolEngine(self.mix_params, self.job_params, sequence_mute_applied).apply_volume()
+            sequence_ready = FxPedalBoardEngine(self.mix_params, self.job_params, sequence_vol_applied).apply_pedalboard_fx()
+            #sequence_ready = FxEngine(self.mix_params, self.job_params, sequence_vol_applied).apply_fx()
+            
+            if sequence_ready:
+                print('Sequence ready')
+                #StorageEngine(self.job_params,'mixdown_job_path').upload_object()
+                return True
+            else:
+                print('Sequence not ready')
+                return False
+            
+        except Exception as e:
+            print(e)
+
        
 
 os.environ["STORAGE_URL"] = 'https://s3.eu-central-1.wasabisys.com'
 os.environ["STORAGE_KEY"] = 'RXL6X3DFGPU2Y38ZC9IY'
 os.environ["STORAGE_SECRET"] = 'weQc1F1uVcwUd7vyOZvKTXpKaun7kT9RSnKVJ9B6'
-    
-job_id = 'job_ids/2022-08-17-1660779803__1660779844-obtnscky11028TQWO.json'
-fx_input='2_4_1_6_1_5'
-channel_index='3'
+
+
+job_id = 'job_ids/2022-11-08-1667943999_test__1660779844-obtnscky11028TQWO.json'
+fx_input='2_4_1_3_1_0'
+channel_index='0'
 selective_mutism_switch='T'
 vol='99_50_76_45_23_99'
 channel_mute_params='T_T_T_T_T_T'
-selective_mutism_value='0.4'
-random_id='pashion_fruit'
+selective_mutism_value='0.3'
+random_id='fengshui'
 
-try:
-    mix_params2 = FxParamsModel(job_id= job_id, 
+
+mix_params2 = FxParamsModel(job_id= job_id, 
                             fx_input=fx_input, 
                             channel_index='3', 
                             selective_mutism_switch=selective_mutism_switch, 
                             vol=vol, 
                             channel_mute_params=channel_mute_params, 
                             selective_mutism_value=selective_mutism_value)
-except ValidationError as e:
-    print(e)
-    
+
 
  
-mix_params.channel_index
+
         
-job = FxRunner(mix_params, job_id, channel_index, random_id)
+job = FxRunner(mix_params2, job_id, channel_index, random_id)
+
+
 job_params = JobConfig(job_id, channel_index, random_id)
+job_params.path_resolver()['local_path_mixdown_pkl']
 
-my_file = Path(job_params.path_resolver()['local_path'])
+sequence_mute_applied = MuteEngine(mix_params2, job_params).apply_selective_mutism()
 
-my_file.resolve(strict=True)  
+sequence_vol_applied = VolEngine(mix_params2, job_params, sequence_mute_applied).apply_volume()
+sequence_ready = FxPedalBoardEngine(mix_params2, job_params, sequence_vol_applied).apply_pedalboard_fx()
 
-sequence_mute_applied = MuteEngine(mix_params, job_params).apply_selective_mutism()
 
-sequence_vol_applied = VolEngine(mix_params, job_params, sequence_mute_applied).apply_volume()
+fx_mapping = ['Bitcrush', 'Chorus', 'Delay', 'Flanger', 'Phaser', 'Reverb', 'Distortion']
+        
+channel_index = int(job_params.channel_index)
+fx_input = mix_params2.fx_input[channel_index]
+  
+import pedalboard  
+      
+if fx_input == 'None':
+    print('No FX applied')
+    AudioEngine(self.my_sequence, self.job_params.path_resolver()['local_path_mixdown_pkl'], normalized = True).save_to_pkl()
 
-sequence_ready = FxEngine(mix_params, job_params, sequence_vol_applied).apply_fx()
+else:
+    fx = fx_mapping[int(fx_input)]
+       
+    validated_fx = FxPedalBoardConfig.parse_obj({'audio_fx': fx}) 
+        
+    pedalboard_fx = getattr(pedalboard, validated_fx.audio_fx)
+    
+    
+    board = pedalboard.Pedalboard([pedalboard_fx()])
+        
+    try:
+        effected = board(sequence_vol_applied, 44100.0)
+    except Exception as e:
+        print(e)
+
+
+    else:
+        y_effected = np.int16(effected * 2 ** 15)
+        AudioEngine(y_effected, self.job_params.path_resolver()['local_path_mixdown_pkl'], normalized = True).save_to_pkl()
+
+
+
+sequence_ready = FxEngine(mix_params2, job_params, sequence_vol_applied).apply_fx()
  
  
 input_file = job_params.path_resolver()['local_path_pre_mixdown_mp3']
