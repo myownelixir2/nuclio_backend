@@ -997,39 +997,36 @@ import pickle
 import os
 
 
-# MIX FILES
-dir_path = r'temp'
+def mix_sequences():
 
-# list to store files
-res = []
-# Iterate directory
-for file in os.listdir(dir_path):
-    # check only text files
-    if file.endswith('.pkl'):
-        my_arrays = pickle.load(open(os.path.join(dir_path, file), 'rb'))
-        #new_sequence_unpacked = [item for sublist in my_arrays for item in sublist]
-        new_seq = SequenceEngine.validate_sequence(96, my_arrays)
+    dir_path = r'temp'
+    bpm = self.job_params.get_job_params()['bpm']
+    res = []
+
+    for file in os.listdir(dir_path):
+
+        if file.startswith('mixdown_') and file.endswith('.pkl'):
+            my_arrays = pickle.load(open(os.path.join(dir_path, file), 'rb'))
+
+            new_seq = SequenceEngine.validate_sequence(96, my_arrays)
         
-        res.append(new_seq)
+            res.append(new_seq)
 
+    my_input = [(a + b + c + d + e + f) / 6 for a, b, c, d, e, f in zip(res[0], res[1], res[2], res[3], res[4], res[5])]
 
+    audio_seq_array = np.array(my_input)
 
+    channels = 2 if (audio_seq_array.ndim == 2 and audio_seq_array.shape[1] == 2) else 1
+    if self.normalized:  # normalized array - each item should be a float in [-1, 1)
+        y = np.int16(audio_seq_array * 2 ** 15)
+    else:
+        y = np.int16(audio_seq_array)
 
-my_input = [(a + b + c + d + e + f) / 6 for a, b, c, d, e, f in zip(res[0], res[1], res[2], res[3], res[4], res[5])]
-
-audio_seq_array = np.array(my_input)
-
-channels = 2 if (audio_seq_array.ndim == 2 and audio_seq_array.shape[1] == 2) else 1
-if self.normalized:  # normalized array - each item should be a float in [-1, 1)
-    y = np.int16(audio_seq_array * 2 ** 15)
-else:
-    y = np.int16(audio_seq_array)
-
+    path = '/Users/wojciechbednarz/Desktop/python_projects/euclidean_rhythm_generator_mobile_python_fastapi/temp/test.mp3'
     
-path = '/Users/wojciechbednarz/Desktop/python_projects/euclidean_rhythm_generator_mobile_python_fastapi/temp/test.mp3'
-
-sequence = pydub.AudioSegment(y.tobytes(), frame_rate=44100, sample_width=2, channels=channels)
-sequence.export(path, format="mp3", bitrate="128k")
+    sequence = pydub.AudioSegment(y.tobytes(), frame_rate=44100, sample_width=2, channels=channels)
+    sequence.export(path, format="mp3", bitrate="128k")
+    
 
 len(res[4])
 

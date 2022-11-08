@@ -193,9 +193,7 @@ class FxPedalBoardEngine:
                 y_effected = np.int16(effected * 2 ** 15)
                 AudioEngine(y_effected, self.job_params.path_resolver()['local_path_mixdown_pkl'], normalized = True).save_to_pkl()
                 return True
-            
-    
-        
+                    
     
 class FxEngine:
     def __init__(self, mix_params, job_params, my_sequence):
