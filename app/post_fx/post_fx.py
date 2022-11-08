@@ -153,7 +153,7 @@ class FxPedalBoardConfig(BaseModel):
     
     @validator('audio_fx')
     def job_id_validator(cls, v):
-        if v not in ['Bitcrush','Chorus','Delay','Flanger','Phaser','Reverb']:
+        if v not in ['Bitcrush', 'Chorus', 'Delay', 'Phaser', 'Reverb', 'Distortion']:
             raise ValueError('not allowed FX input')
         return v
     
