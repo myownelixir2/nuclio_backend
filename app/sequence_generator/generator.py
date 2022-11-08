@@ -23,8 +23,8 @@ from app.storage.storage import *
 #test_job_id_cloud = 'job_ids/2022-08-17-1660779803__1660779844-obtnscky11028TQWO.json'
 
 os.environ["STORAGE_URL"] = 'https://s3.eu-central-1.wasabisys.com'
-os.environ["STORAGE_KEY"] = 'P80MDNX2GDE4GEI5AHVU'
-os.environ["STORAGE_SECRET"] = 'oqmjbR5EXRjRB880IwE6WNj5DY8EoLbpsOYiI9BW'
+os.environ["STORAGE_KEY"] = 'QP0RPQHIAHOCDWITFM3N'
+os.environ["STORAGE_SECRET"] = 'zm0ufoaKHIethvU387H2F4JmF1s9GUeOoPz9zSqi'
 
 
      
@@ -349,8 +349,8 @@ class JobRunner:
         try:
             #print(self.job_params.path_resolver()['local_path_mixdown_pkl'])
             AudioEngine(audio_sequence, self.job_params.path_resolver()['local_path_processed_pkl'], normalized = None).save_to_pkl()
-            AudioEngine(validated_audio, self.job_params.path_resolver()['local_path_processed'], normalized = True).save_to_mp3()
-            StorageEngine(self.job_params,'processed_job_path').upload_object()
+            #AudioEngine(validated_audio, self.job_params.path_resolver()['local_path_processed'], normalized = True).save_to_mp3()
+            #StorageEngine(self.job_params,'processed_job_path').upload_object()
             
             return True
         except Exception as e:

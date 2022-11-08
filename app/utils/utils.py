@@ -55,9 +55,13 @@ class JobConfig:
         cloud_path_mixdown = f'mixdown/mixdown_{self.random_id}_{sanitized_job_id}'
         
         local_path_pre_mixdown_mp3 = f'temp/pre_mixdown_{self.random_id}_{sanitized_job_id}__{self.channel_index}.mp3'
-
+        local_path_pre_mixdown_pkl = f'temp/pre_mixdown_{self.random_id}_{sanitized_job_id}__{self.channel_index}.pkl'
+        
         local_path_mixdown_mp3 = f'{local_path_mixdown}_{self.channel_index}.mp3'
         cloud_path_mixdown_mp3 = f'{cloud_path_mixdown}_{self.channel_index}.mp3'
+        
+        local_path_mixdown_pkl = f'{local_path_mixdown}_{self.channel_index}.pkl'
+        cloud_path_mixdown_pkl = f'{cloud_path_mixdown}_{self.channel_index}.pkl'
         
         local_path_mixdown_mp3_master = f'{local_path_mixdown}_master.mp3'
         cloud_path_mixdown_mp3_master = f'{cloud_path_mixdown}_master.mp3'
@@ -69,6 +73,9 @@ class JobConfig:
                       'local_path_processed_pkl': local_path_processed_pkl,
                       'cloud_path_processed_pkl': cloud_path_processed_pkl,
                       'local_path_pre_mixdown_mp3': local_path_pre_mixdown_mp3,
+                      'local_path_pre_mixdown_pkl': local_path_pre_mixdown_pkl,
+                      'local_path_mixdown_pkl': local_path_mixdown_pkl,
+                      'cloud_path_mixdown_pkl': cloud_path_mixdown_pkl,
                       'local_path_mixdown_mp3': local_path_mixdown_mp3,
                       'cloud_path_mixdown_mp3': cloud_path_mixdown_mp3,
                       'local_path_mixdown_mp3_master': local_path_mixdown_mp3_master,

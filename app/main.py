@@ -1,6 +1,11 @@
 from fastapi import FastAPI, HTTPException
 import os
 import logging
+from pydantic import ValidationError, validator
+from pathlib import Path
+from starlette.responses import Response
+from starlette.requests import Request
+from fastapi.responses import JSONResponse
 from app.sequence_generator.generator import *
 from app.mixer.mixer import *
 
@@ -11,6 +16,14 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+async def catch_exceptions_middleware(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as e:
+        logger.error(e)
+        return Response("Internal server error", status_code=500)
+
+app.middleware('http')(catch_exceptions_middleware)
 
 @app.get('/')
 def home():
@@ -23,14 +36,17 @@ def job_id(job_id: str):
     logger.info('fetching job id...')
     job_params = JobConfig(job_id, 0, random_id='')
     my_storage = StorageEngine(job_params, 'job_id_path')
-    error = my_storage.client_init()
+    my_storage.client_init()
+    my_storage.get_object()
     
-    if isinstance(error, bool):
-        raise HTTPException(status_code=500, detail='missing storage credentials')
+    try:
+        job_id_file = Path(job_params.path_resolver()['local_path'])
+        job_id_file.resolve(strict=True)   
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Job ID not found")
     else:
-        my_storage.get_object()
-        return True
-
+        return {'job_id': job_id}
+        
 
 
 @app.post('/get_sequence')
@@ -41,9 +57,6 @@ def get_sequence(job_id: str, channel_index: int, random_id: str):
         res = job.execute()
         processed_job_id = job.result(res)
         logger.info('Finished building sequence...')
-
-        # job.clean_up()
-        logger.info('clean up done...')
         print(processed_job_id)
 
         if 'sequences' not in processed_job_id:
@@ -65,23 +78,32 @@ def apply_fx(job_id: str,
              channel_mute_params: str,
              selective_mutism_value: str
              ):
-    try:
-        logger.info('Starting to apply fx...')
-        
-        mix_params = FxParamsModel(job_id, fx_input, channel_index, selective_mutism_switch, vol, channel_mute_params, selective_mutism_value)
-        
-        job = FxRunner(mix_params, job_id, channel_index, random_id)
-        res = job.execute()
-        
-        logger.info('Finished applying fx...')
 
-        if not res:
-            raise HTTPException(status_code=404, detail="Something went wrong with applying fx")
-        else:
-            return res
-    except Exception as e:
-        logger.error(e)
-        return e
+    mix_params = FxParamsModel(job_id=job_id, 
+                                   fx_input=fx_input, 
+                                   channel_index=channel_index, 
+                                   selective_mutism_switch=selective_mutism_switch, 
+                                   vol=vol, 
+                                   channel_mute_params=channel_mute_params, 
+                                   selective_mutism_value=selective_mutism_value)
+    try: 
+        logger.info('Starting to apply fx...')
+        job_params = JobConfig(job_id, channel_index, random_id=random_id)
+        
+        fx = FxRunner(mix_params, job_id, channel_index, random_id)
+        res=fx.execute()
+        
+        print(res)
+        
+        mixdown_file = Path(job_params.path_resolver()['local_path_pre_mixdown_mp3'])
+        mixdown_file.resolve(strict=True)     
+    
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="mixdown file not found, job failed ;(")
+    else:
+        return mix_params
+
+    
     
 
 @app.post('/mix_sequences')

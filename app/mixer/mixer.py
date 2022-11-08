@@ -30,7 +30,7 @@ class MixEngine:
         input_files = '-i ' + ' -i '.join(current_sequences_list)
         output_file = self.job_params.path_resolver()['local_path_mixdown_mp3_master']
         
-        mix_cmd = f"ffmpeg -y {input_files} -filter_complex '[0:0][1:0] amix=inputs=2:duration=longest' -c:a libmp3lame {output_file}"
+        mix_cmd = f"ffmpeg -y {input_files} -filter_complex '[0:0][1:0] amix=inputs=6:duration=longest' -c:a libmp3lame {output_file}"
         
         try:
             returned_value = os.system(mix_cmd)  # returns the exit code in unix
