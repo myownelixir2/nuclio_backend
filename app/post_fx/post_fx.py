@@ -144,8 +144,10 @@ class VolEngine:
             my_sequence_vol_applied = my_sequence_unpacked
         else:
             my_sequence_vol_applied = np.array(my_sequence_unpacked) * vol
-             
-        return my_sequence_vol_applied
+        
+        my_sequence_vol_applied_normalized = 2.*(my_sequence_vol_applied - np.min(my_sequence_vol_applied))/np.ptp(my_sequence_vol_applied)-1    
+            
+        return my_sequence_vol_applied_normalized
     
     
 class FxPedalBoardConfig(BaseModel):
@@ -191,7 +193,8 @@ class FxPedalBoardEngine:
 
             else:
                 y_effected = np.int16(effected * 2 ** 15)
-                AudioEngine(y_effected, self.job_params.path_resolver()['local_path_mixdown_pkl'], normalized = True).save_to_pkl()
+                normalized_y_effected = np.interp(y_effected, (y_effected.min(), y_effected.max()), (-1, +1))
+                AudioEngine(normalized_y_effected, self.job_params.path_resolver()['local_path_mixdown_pkl'], normalized = True).save_to_pkl()
                 return True
                     
     

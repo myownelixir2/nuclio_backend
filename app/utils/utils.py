@@ -12,11 +12,11 @@ import boto3
 
 class JobTypeValidator(BaseModel):
     job_type: Literal['job_id_path', 'processed_job_path',
-                      'asset_path', 'mixdown_job_path', 'mixdown_job_path_pkl']
+                      'asset_path', 'mixdown_job_path', 'mixdown_job_path_master', 'mixdown_job_path_pkl']
 
     @validator('job_type')
     def job_type_validator(cls, v):
-        if v not in ['job_id_path', 'processed_job_path', 'asset_path', 'mixdown_job_path', 'mixdown_job_path_master', 'mixdown_job_path_pkl']:
+        if v not in ['job_id_path', 'processed_job_path', 'asset_path','mixdown_job_path_master', 'mixdown_job_path', 'mixdown_job_path_master', 'mixdown_job_path_pkl']:
             raise ValueError(
                 'job_type must be either "job_id_path", "processed_job_path", "asset_path", "mixdown_job_path" or "mixdown_job_path_pkl" or "mixdown_job_path_master"')
         return v
