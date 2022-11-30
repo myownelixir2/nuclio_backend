@@ -1,20 +1,14 @@
-import re
 from turtle import st
 import pandas as pd
-import csv
 import os
 import pickle
-import librosa
 import soundfile as sf
 import numpy as np
-import math
 import pydub
 from datetime import datetime
 from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, BaseSettings, validator, SecretStr
 from collections import Counter
-import random
-import boto3
 import glob
 from app.post_fx.post_fx import *
 
@@ -38,7 +32,7 @@ class MixEngine:
 
                 new_seq = SequenceEngine.validate_sequence(bpm , my_arrays)
         
-            res.append(new_seq)
+                res.append(new_seq)
 
         my_input = [(a + b + c + d + e + f) / 6 for a, b, c, d, e, f in zip(res[0], res[1], res[2], res[3], res[4], res[5])]
 
@@ -53,6 +47,7 @@ class MixEngine:
         try:
             sequence = pydub.AudioSegment(y.tobytes(), frame_rate=44100, sample_width=2, channels=channels)
             sequence.export(output_file, format="mp3", bitrate="128k")
+            
             if os.path.exists(output_file):
                 print('sequences mixed')
                 return True
@@ -106,7 +101,7 @@ class MixRunner:
     def execute(self):
         try:
             job_params = JobConfig(self.job_id, 0, self.random_id)
-            mix_ready = MixEngine(job_params).mix_sequences_pkl()
+            mix_ready = MixEngine(job_params, normalize=True).mix_sequences_pkl()
             if mix_ready:
                 StorageEngine(job_params,'mixdown_job_path_master').upload_object()
                 return True
