@@ -15,8 +15,6 @@ from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, BaseSettings, validator, SecretStr
 from collections import Counter
 import random
-import boto3
-import glob
 from app.storage.storage import *
 
 
@@ -340,7 +338,7 @@ class JobRunner:
         try:
             #StorageEngine(self.job_params,'job_id_path').delete_local_object()
             StorageEngine(self.job_params,'asset_path').delete_local_object()
-            StorageEngine(self.job_params,'processed_job_path').delete_local_object()
+            #StorageEngine(self.job_params,'processed_job_path').delete_local_object()
         except Exception as e:
             print(e)
     

@@ -1,14 +1,14 @@
 import json
 import re
 import pandas as pd
-import librosa
 import soundfile as sf
 import numpy as np
-import pydub
-from typing import Literal
+from typing import Literal, List
 from pydantic import BaseModel, Field, BaseSettings, validator, SecretStr
-import boto3
-
+import glob
+import os
+import pathlib
+import itertools
 
 class JobTypeValidator(BaseModel):
     job_type: Literal['job_id_path', 'processed_job_path',
@@ -111,7 +111,86 @@ class JobConfig:
     
 
 class JobCleanUp:
-    pass
+    def __init__(self, job_id: str):
+        self.job_id = job_id
+        
+    def assets(self):
+
+        assets_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'assets/sounds/')
+        
+        pattern_path = assets_path + '/*.mp3'
+        
+        files = glob.glob(pattern_path)
+        
+        for f in files:
+            try:
+    
+                file_to_rem = pathlib.Path(f)
+                file_to_rem.unlink()
+                
+            except OSError as e:
+                print("Error: %s : %s" % (f, e.strerror))
+                return False
+    
+    
+    def assets_refactor(self):
+        assets_path = os.path.abspath(os.path.join("assets", "sounds"))
+        files = glob.glob(os.path.join(assets_path, "*.mp3"))
+
+        file_to_rem = [pathlib.Path(f).unlink for f in files]
+
+        return all(map(file_to_rem, files))
+    
+    def sanitize_job_id(self):
+        my_job_id = self.job_id
+        
+        sanitized_job_id = my_job_id.replace(".json", "").replace("job_ids/", "")
+
+        return sanitized_job_id
+    
+    @staticmethod
+    def filter_list(my_list: List[str], my_string: str) -> List[str]:
+        pattern = re.compile(my_string)
+        filtered_list = [item for item in my_list if pattern.search(item)]
+
+        return filtered_list
+    
+    def temp(self):
+         #sanitie job id
+        my_job_id = self.sanitize_job_id()
+        
+        temp_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'temp/')
+        
+        ext_types = ['*.pkl', '*.mp3', '*.json'] # the tuple of file types
+
+        files_grabbed = []
+        for ext_type in ext_types:
+            pattern_path = temp_path + ext_type
+            files = glob.glob(pattern_path)
+            files_grabbed.append(files)
+    
+        unpacked_files_grabbed =  [item for sublist in files_grabbed for item in sublist]  
+        # making sure we only grab the files with certain ids
+        sanitized_unpacked_files = self.filter_list(my_list=unpacked_files_grabbed, my_string=my_job_id)
+
+        for f in sanitized_unpacked_files:
+            try:
+                file_to_rem = pathlib.Path(f)
+                file_to_rem.unlink()
+            except OSError as e:
+                print("Error: %s : %s" % (f, e.strerror))
+                return False
+        
 
 
+    def tempre_factor(self):
+        temp_path = os.path.abspath(os.path.join("temp"))
 
+        ext_types = ["*.pkl", "*.mp3", "*.json"]
+        files = itertools.chain(*(glob.glob(os.path.join(temp_path, ext)) for ext in ext_types))
+
+        file_to_rem = [pathlib.Path(f).unlink for f in files]
+
+        return all(map(file_to_rem, files))
+    
+        

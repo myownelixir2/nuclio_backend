@@ -17,6 +17,10 @@ tests.py
 __pycache__/
 *.py[cod]
 *$py.class
+app/__pycache__/
+app/__pycache__/
+app/sequence_generator/__pycache__/
+app/utils/__pycache__/
 
 # C extensions
 *.so
@@ -166,3 +170,5 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+

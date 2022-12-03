@@ -14,6 +14,7 @@ from app.mixer.mixer import *
 logger = logging.getLogger(__name__)
 
 
+
 app = FastAPI()
 
 async def catch_exceptions_middleware(request: Request, call_next):
@@ -61,6 +62,9 @@ def get_sequence(job_id: str, channel_index: int, random_id: str):
 
         if 'sequences' not in processed_job_id:
             raise HTTPException(status_code=404, detail="problem with sequence generation")
+        
+        
+        
         return processed_job_id
 
     except Exception as e:
@@ -120,6 +124,31 @@ def mix_sequences(job_id: str, random_id: str ):
             raise HTTPException(status_code=404, detail="Something went wrong with mixing sequences")
         else:
             return res
+    except Exception as e:
+        logger.error(e)
+        return e
+    
+
+@app.post('/clean_up_assets')
+def clean_up_assets(job_id: str):
+    try:
+        logger.info('Starting to clean up assets...')
+        clean_up_job = JobCleanUp(job_id)
+        res = clean_up_job.assets()
+        logger.info('Finished cleaning up assets...')
+        return res
+    except Exception as e:
+        logger.error(e)
+        return e
+    
+@app.post('/clean_up_temp')
+def clean_up_temp(job_id: str):
+    try:
+        logger.info('Starting to clean up assets...')
+        clean_up_job = JobCleanUp(job_id)
+        res = clean_up_job.temp()
+        logger.info('Finished cleaning up assets...')
+        return res
     except Exception as e:
         logger.error(e)
         return e
