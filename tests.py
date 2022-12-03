@@ -428,7 +428,7 @@ class FxRunner:
             
             if sequence_ready:
                 print('Sequence ready')
-                StorageEngine(self.job_params,'mixdown_job_path').upload_object()
+                StorageEngine(job_params,'mixdown_job_path').upload_object()
                 return True
             else:
                 print('Sequence not ready')
@@ -757,7 +757,7 @@ class JobRunner:
             #print(self.job_params.path_resolver()['local_path_mixdown_pkl'])
             AudioEngine(audio_sequence, self.job_params.path_resolver()['local_path_processed_pkl'], normalized = None).save_to_pkl()
             AudioEngine(validated_audio, self.job_params.path_resolver()['local_path_processed'], normalized = True).save_to_mp3()
-            StorageEngine(self.job_params,'processed_job_path').upload_object()
+            StorageEngine(job_params,'processed_job_path').upload_object()
             
             return True
         except Exception as e:
@@ -868,18 +868,19 @@ class FxRunner:
        
 
 os.environ["STORAGE_URL"] = 'https://s3.eu-central-1.wasabisys.com'
-os.environ["STORAGE_KEY"] = 'RXL6X3DFGPU2Y38ZC9IY'
-os.environ["STORAGE_SECRET"] = 'weQc1F1uVcwUd7vyOZvKTXpKaun7kT9RSnKVJ9B6'
+os.environ["STORAGE_KEY"] = 'QP0RPQHIAHOCDWITFM3N'
+os.environ["STORAGE_SECRET"] = 'zm0ufoaKHIethvU387H2F4JmF1s9GUeOoPz9zSqi'
 
 
-job_id = 'job_ids/2022-11-08-1667943999_test__1660779844-obtnscky11028TQWO.json'
+
+job_id = 'job_ids/2022-12-02-1670023805_test__1660779844-obtnscky11028TQWO.json'
 fx_input='2_4_1_3_1_0'
 channel_index='0'
 selective_mutism_switch='T'
 vol='99_50_76_45_23_99'
 channel_mute_params='T_T_T_T_T_T'
 selective_mutism_value='0.3'
-random_id='fengshui'
+random_id='kxqgcs'
 
 
 mix_params2 = FxParamsModel(job_id= job_id, 
