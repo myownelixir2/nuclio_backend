@@ -121,17 +121,17 @@ class JobCleanUp:
         pattern_path = assets_path + '/*.mp3'
         
         files = glob.glob(pattern_path)
-        
+        status = []
         for f in files:
             try:
     
                 file_to_rem = pathlib.Path(f)
                 file_to_rem.unlink()
-                
+                status.append(True)
             except OSError as e:
                 print("Error: %s : %s" % (f, e.strerror))
-                return False
-    
+                status= False
+        return status
     
     def assets_refactor(self):
         assets_path = os.path.abspath(os.path.join("assets", "sounds"))
@@ -172,14 +172,16 @@ class JobCleanUp:
         unpacked_files_grabbed =  [item for sublist in files_grabbed for item in sublist]  
         # making sure we only grab the files with certain ids
         sanitized_unpacked_files = self.filter_list(my_list=unpacked_files_grabbed, my_string=my_job_id)
-
+        status = []
         for f in sanitized_unpacked_files:
             try:
                 file_to_rem = pathlib.Path(f)
                 file_to_rem.unlink()
+                status.append(True)
             except OSError as e:
                 print("Error: %s : %s" % (f, e.strerror))
-                return False
+                status = False
+        return status
         
 
 

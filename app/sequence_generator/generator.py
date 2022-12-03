@@ -333,12 +333,9 @@ class JobRunner:
             return print('Error')
     
     def clean_up(self):
-        self.job_params = JobConfig(self.job_id, self.channel_index, self.random_id)
-        
+        self.job_params = JobConfig(self.job_id, self.channel_index, self.random_id)  
         try:
-            #StorageEngine(self.job_params,'job_id_path').delete_local_object()
             StorageEngine(self.job_params,'asset_path').delete_local_object()
-            #StorageEngine(self.job_params,'processed_job_path').delete_local_object()
         except Exception as e:
             print(e)
     
@@ -349,10 +346,7 @@ class JobRunner:
         validated_audio, audio_sequence = self.validate()
         
         try:
-            #print(self.job_params.path_resolver()['local_path_mixdown_pkl'])
             AudioEngine(audio_sequence, self.job_params.path_resolver()['local_path_processed_pkl'], normalized = None).save_to_pkl()
-            #AudioEngine(validated_audio, self.job_params.path_resolver()['local_path_processed'], normalized = True).save_to_mp3()
-            #StorageEngine(self.job_params,'processed_job_path').upload_object()
             
             return True
         except Exception as e:
