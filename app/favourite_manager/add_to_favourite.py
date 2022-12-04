@@ -13,7 +13,7 @@ class AddToFavouriteManager:
     def __init__(self, job_params):
         self.job_params = job_params
         
-    def add_to_favourite(self):
+    def add_favourite_to_bucket(self):
         # get the favourite list
         # add the job id to the list
         # save the list

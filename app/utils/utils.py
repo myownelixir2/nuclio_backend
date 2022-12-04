@@ -108,7 +108,63 @@ class JobConfig:
 
         return params_dict
     
+class JobUtils:
+    def __init__(self, job_id: str):
+        self.job_id = job_id
     
+    def sanitize_job_id(self):
+        my_job_id = self.job_id
+        
+        sanitized_job_id = my_job_id.replace(".json", "").replace("job_ids/", "")
+
+        return sanitized_job_id
+    
+    
+    @staticmethod
+    def list_files_matching_pattern(extensions: List[str], directory: str, pattern: str) -> List[str]:
+        """
+        Args:
+            extensions (List[str]): list of extensions to search for ['*.mp3', '*.pkl']
+            directory (str): directory to search in for example 'temp' or  'assets/sounds'
+            pattern (str): pattern to look for in the file name, for example 'job_id_dshfdsk23243'
+
+        Returns:
+            List[str]: returns a list of files with the pattern in the directory
+        Usage:
+            list_files_with_string(extensions=['*.mp3', '*.pkl'], directory='temp', pattern='cyoprs')
+        """
+        assets_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), directory)
+       
+        file_paths = []
+        for ext in extensions:
+            file_paths.extend(glob.glob(os.path.join(assets_path, ext))) 
+       
+        matching_file_paths = [f for f in file_paths if pattern in f]
+        return matching_file_paths
+    
+   
+    
+    @staticmethod
+    def remove_files(files: List[str]) -> bool:
+        """
+        Remove a list of files.
+        Args:
+            files: A list of file paths to be removed.
+        
+        Returns:
+            True if all files were successfully removed, False otherwise.
+        """
+        success = True
+        for f in files:
+            try:
+                file_to_remove = pathlib.Path(f)
+                file_to_remove.unlink()
+            except OSError as e:
+                print("Error: %s : %s" % (f, e.strerror))
+                success = False
+        
+        return success
+   
 
 class JobCleanUp:
     def __init__(self, job_id: str):
@@ -124,7 +180,6 @@ class JobCleanUp:
         status = []
         for f in files:
             try:
-    
                 file_to_rem = pathlib.Path(f)
                 file_to_rem.unlink()
                 status.append(True)
