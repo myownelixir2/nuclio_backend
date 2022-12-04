@@ -106,3 +106,28 @@ class StorageEngine:
         except Exception as e:
             print(e)
             return False
+
+    def upload_list_of_objects(self, files: List[str], bucket_path: str) -> bool:
+        
+        def sanitize_list(file_list: List[str]) -> List[str]:
+            return [os.path.basename(file) for file in file_list]
+        
+        sanitized_files = sanitize_list(files)
+        cloud_paths = [os.path.join(bucket_path, file) for file in sanitized_files]    
+        status =True
+        try:
+            client = self.client_init()
+            bucket = client.Bucket('sample-dump')
+            
+        except Exception as e:
+            print(f'An error occurred while initiating an s3 client: {e}')
+            status= False
+        else:
+            for file, cloud_path in zip(files, cloud_paths):
+                try:
+                    bucket.upload_file(file, cloud_path)
+                except Exception as e:
+                    print(f'An error occurred while uploading the file {file} to S3: {e}')
+                    status= False
+        return status
+        
