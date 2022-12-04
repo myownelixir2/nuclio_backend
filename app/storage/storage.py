@@ -107,6 +107,10 @@ class StorageEngine:
             print(e)
             return False
 
+class StoreEngineMultiFile:
+    def __init__(self, job_id):
+        self.job_id : str = job_id
+
     def upload_list_of_objects(self, files: List[str], bucket_path: str) -> bool:
         
         def sanitize_list(file_list: List[str]) -> List[str]:

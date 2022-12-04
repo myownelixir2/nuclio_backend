@@ -133,8 +133,10 @@ def mix_sequences(job_id: str, random_id: str ):
 def clean_up_assets(job_id: str):
     try:
         logger.info('Starting to clean up assets...')
-        clean_up_job = JobCleanUp(job_id)
-        res = clean_up_job.assets()
+        clean_up_job = JobUtils(job_id)
+        sanitized_job_id = clean_up_job.sanitize_job_id()
+        matching_files = clean_up_job.list_files_matching_pattern(['*.mp3'], 'assets/sounds', '*')
+        res = clean_up_job.remove_files(matching_files)
         logger.info('Finished cleaning up assets...')
         return res
     except Exception as e:
@@ -145,10 +147,23 @@ def clean_up_assets(job_id: str):
 def clean_up_temp(job_id: str):
     try:
         logger.info('Starting to clean up assets...')
-        clean_up_job = JobCleanUp(job_id)
-        res = clean_up_job.temp()
+        
+        clean_up_job = JobUtils(job_id)
+        sanitized_job_id = clean_up_job.sanitize_job_id()
+        matching_files = clean_up_job.list_files_matching_pattern(['*.mp3', '*.pkl','*.json'], 'temp', sanitized_job_id)
+        res = clean_up_job.remove_files(matching_files)
         logger.info('Finished cleaning up assets...')
         return res
     except Exception as e:
         logger.error(e)
         return e
+
+@app.post('/add_to_favourites')
+def add_to_favourites(job_id: str):
+    logger.info('Starting to gather assets...')
+
+    gather_assets_job = JobUtils(job_id)
+    sanitized_job_id = gather_assets_job.sanitize_job_id()
+    matching_files = gather_assets_job.list_files_matching_pattern(['*.mp3', '*.pkl','*.json'], 'temp', sanitized_job_id)
+
+    upload_job = StorageEngine()
