@@ -63,13 +63,12 @@ def get_sequence(job_id: str, channel_index: int, random_id: str):
         if 'sequences' not in processed_job_id:
             raise HTTPException(status_code=404, detail="problem with sequence generation")
         
-        
-        
         return processed_job_id
 
-    except Exception as e:
+    except IndexError as e:
         logger.error(e)
-        return e
+        raise HTTPException(status_code=404, detail="problem with sequence generation")
+
 
 
 @app.post('/apply_fx')
@@ -134,23 +133,32 @@ def clean_up_assets(job_id: str):
     try:
         logger.info('Starting to clean up assets...')
         clean_up_job = JobUtils(job_id)
-        sanitized_job_id = clean_up_job.sanitize_job_id()
-        matching_files = clean_up_job.list_files_matching_pattern(['*.mp3'], 'assets/sounds', '*')
-        res = clean_up_job.remove_files(matching_files)
+
+        matching_assets = clean_up_job.list_files_matching_pattern(['*.mp3'], 'assets/sounds', 'mp3')
+        res = clean_up_job.remove_files(matching_assets)
         logger.info('Finished cleaning up assets...')
         return res
     except Exception as e:
         logger.error(e)
         return e
-    
+ 
+ 
+
 @app.post('/clean_up_temp')
-def clean_up_temp(job_id: str):
+def clean_up_temp(job_id: str, pattern: str):
     try:
         logger.info('Starting to clean up assets...')
         
         clean_up_job = JobUtils(job_id)
         sanitized_job_id = clean_up_job.sanitize_job_id()
-        matching_files = clean_up_job.list_files_matching_pattern(['*.mp3', '*.pkl','*.json'], 'temp', sanitized_job_id)
+        if pattern == 'all':
+            patterns_to_match = sanitized_job_id
+        else:
+            if pattern in ['mixdown', 'sequence', 'fx']:
+                patterns_to_match = pattern
+            else:
+                raise HTTPException(status_code=404, detail="pattern not supported")
+        matching_files = clean_up_job.list_files_matching_pattern(['*.mp3', '*.pkl','*.json'], 'temp', patterns_to_match)
         res = clean_up_job.remove_files(matching_files)
         logger.info('Finished cleaning up assets...')
         return res
@@ -158,12 +166,29 @@ def clean_up_temp(job_id: str):
         logger.error(e)
         return e
 
+
 @app.post('/add_to_favourites')
 def add_to_favourites(job_id: str):
-    logger.info('Starting to gather assets...')
+    logger.info('Uploading favourites to cloud...')
+    try:
+        
+        gather_assets_job = JobUtils(job_id)
+        sanitized_job_id = gather_assets_job.sanitize_job_id()
+        matching_files = gather_assets_job.list_files_matching_pattern(['*.mp3', '*.pkl','*.json'], 'temp', sanitized_job_id)
+        print(matching_files)
+        multi_file_upload_job = StoreEngineMultiFile(job_id)
 
-    gather_assets_job = JobUtils(job_id)
-    sanitized_job_id = gather_assets_job.sanitize_job_id()
-    matching_files = gather_assets_job.list_files_matching_pattern(['*.mp3', '*.pkl','*.json'], 'temp', sanitized_job_id)
+        status = multi_file_upload_job.upload_list_of_objects(matching_files, 'my_favourites')
+    except Exception as e:
+        logger.error(e)
+        print(e)
+        status = False
+        
+    return status
 
-    upload_job = StorageEngine()
+
+
+
+
+        
+        

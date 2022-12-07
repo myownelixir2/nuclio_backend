@@ -110,6 +110,18 @@ class StorageEngine:
 class StoreEngineMultiFile:
     def __init__(self, job_id):
         self.job_id : str = job_id
+        
+    def client_init(self):
+        try:
+            self.client = boto3.resource('s3',
+                                        endpoint_url=StorageCreds().endpoint_url,
+                                        aws_access_key_id=StorageCreds().access_key_id,
+                                        aws_secret_access_key=StorageCreds().secret_access_key
+                                        )
+            return self.client
+        except Exception as e:
+            print(e)
+            return False
 
     def upload_list_of_objects(self, files: List[str], bucket_path: str) -> bool:
         
