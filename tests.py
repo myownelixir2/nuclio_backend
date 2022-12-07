@@ -1122,3 +1122,139 @@ def apply_pedalboard_fx(audio_array, fx):
     
     return y_effected
 
+class JobUtils:
+    def __init__(self, job_id: str):
+        self.job_id = job_id
+    
+    def sanitize_job_id(self):
+        my_job_id = self.job_id
+        
+        sanitized_job_id = my_job_id.replace(".json", "").replace("job_ids/", "")
+
+        return sanitized_job_id
+    
+    
+    @staticmethod
+    def list_files_matching_pattern(extensions: List[str], directory: str, pattern: str) -> List[str]:
+        """
+        Args:
+            extensions (List[str]): list of extensions to search for ['*.mp3', '*.pkl']
+            directory (str): directory to search in for example 'temp' or  'assets/sounds'
+            pattern (str): pattern to look for in the file name, for example 'job_id_dshfdsk23243'
+
+        Returns:
+            List[str]: returns a list of files with the pattern in the directory
+        Usage:
+            list_files_with_string(extensions=['*.mp3', '*.pkl'], directory='temp', pattern='cyoprs')
+        """
+        assets_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), directory)
+       
+        file_paths = []
+        for ext in extensions:
+            file_paths.extend(glob.glob(os.path.join(assets_path, ext))) 
+       
+        matching_file_paths = [f for f in file_paths if pattern in f]
+        return matching_file_paths
+    
+   
+    
+    @staticmethod
+    def remove_files(files: List[str]) -> bool:
+        """
+        Remove a list of files.
+        Args:
+            files: A list of file paths to be removed.
+        
+        Returns:
+            True if all files were successfully removed, False otherwise.
+        """
+        success = True
+        for f in files:
+            try:
+                file_to_remove = pathlib.Path(f)
+                file_to_remove.unlink()
+            except OSError as e:
+                print("Error: %s : %s" % (f, e.strerror))
+                success = False
+        
+        return success
+   
+   
+class StoreEngineMultiFile:
+    def __init__(self, job_id):
+        self.job_id : str = job_id
+        
+    def client_init(self):
+        try:
+            self.client = boto3.resource('s3',
+                                        endpoint_url=StorageCreds().endpoint_url,
+                                        aws_access_key_id=StorageCreds().access_key_id,
+                                        aws_secret_access_key=StorageCreds().secret_access_key
+                                        )
+            return self.client
+        except Exception as e:
+            print(e)
+            return False
+
+    def upload_list_of_objects(self, files: List[str], bucket_path: str) -> bool:
+        
+        def sanitize_list(file_list: List[str]) -> List[str]:
+            return [os.path.basename(file) for file in file_list]
+        
+        sanitized_files = sanitize_list(files)
+        cloud_paths = [os.path.join(bucket_path, file) for file in sanitized_files]
+        print(cloud_paths)    
+        status =True
+        try:
+            client = self.client_init()
+            bucket = client.Bucket('sample-dump')
+            
+        except Exception as e:
+            print(f'An error occurred while initiating an s3 client: {e}')
+            status= False
+        else:
+            for file, cloud_path in zip(files, cloud_paths):
+                try:
+                    bucket.upload_file(file, cloud_path)
+                except Exception as e:
+                    print(f'An error occurred while uploading the file {file} to S3: {e}')
+                    status= False
+        return status
+
+
+from typing import List, Optional, Literal
+
+from pydantic import BaseModel, Field, BaseSettings, validator, SecretStr
+
+class StorageCreds(BaseSettings):
+    endpoint_url: str = Field(..., env="STORAGE_URL")
+    access_key_id: str = Field(..., env="STORAGE_KEY")
+    secret_access_key: str = Field(..., env="STORAGE_SECRET")
+
+    @validator('endpoint_url', 'access_key_id', 'secret_access_key')
+    def creds_validator(cls, v):
+
+        if v is None:
+            raise ValueError(
+                'endpoint_url, access_key_id and secret_access_key must be set')
+        return v       
+        
+from typing import Literal, List
+import glob 
+import boto3
+
+job_id = 'job_ids/2022-12-04-1670112100_test__1660779844-obtnscky11028TQWO.json'
+gather_assets_job = JobUtils(job_id)
+sanitized_job_id = gather_assets_job.sanitize_job_id()
+os.getcwd()
+matching_files = gather_assets_job.list_files_matching_pattern(['*.mp3', '*.pkl','*.json'], 'temp', sanitized_job_id)
+        
+matching_files_test = ['./temp/mixdown_cyoprs_2022-12-04-1670112100_test__1660779844-obtnscky11028TQWO_master.mp3', './temp/mixdown_cyoprs_2022-12-04-1670112100_test__1660779844-obtnscky11028TQWO_5.pkl', './temp/sequences_2022-12-04-1670112100_test__1660779844-obtnscky11028TQWO_3.pkl', './temp/sequences_2022-12-04-1670112100_test__1660779844-obtnscky11028TQWO_2.pkl', './temp/mixdown_cyoprs_2022-12-04-1670112100_test__1660779844-obtnscky11028TQWO_4.pkl', './temp/sequences_2022-12-04-1670112100_test__1660779844-obtnscky11028TQWO_0.pkl', './temp/sequences_2022-12-04-1670112100_test__1660779844-obtnscky11028TQWO_1.pkl', './temp/mixdown_cyoprs_2022-12-04-1670112100_test__1660779844-obtnscky11028TQWO_3.pkl', './temp/sequences_2022-12-04-1670112100_test__1660779844-obtnscky11028TQWO_5.pkl', './temp/sequences_2022-12-04-1670112100_test__1660779844-obtnscky11028TQWO_4.pkl', './temp/mixdown_cyoprs_2022-12-04-1670112100_test__1660779844-obtnscky11028TQWO_2.pkl', './temp/mixdown_cyoprs_2022-12-04-1670112100_test__1660779844-obtnscky11028TQWO_0.pkl', './temp/mixdown_cyoprs_2022-12-04-1670112100_test__1660779844-obtnscky11028TQWO_1.pkl', './temp/2022-12-04-1670112100_test__1660779844-obtnscky11028TQWO.json']
+
+multi_file_upload_job = StoreEngineMultiFile(job_id)
+os.environ["STORAGE_URL"] = 'https://s3.eu-central-1.wasabisys.com'
+os.environ["STORAGE_KEY"] = 'QP0RPQHIAHOCDWITFM3N'
+os.environ["STORAGE_SECRET"] = 'zm0ufoaKHIethvU387H2F4JmF1s9GUeOoPz9zSqi'
+
+
+multi_file_upload_job.upload_list_of_objects(matching_files_test, 'mixdown')
