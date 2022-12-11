@@ -1,38 +1,12 @@
-from dataclasses import dataclass
-import json
-import re
-from turtle import st
-import pandas as pd
-import csv
 import os
 import pickle
-import librosa
-import soundfile as sf
 import numpy as np
 import math
-import pydub
-from datetime import datetime
-from typing import List, Optional, Literal
-from pydantic import BaseModel, Field, BaseSettings, validator, SecretStr
-from collections import Counter
-from pedalboard.io import AudioFile
+from pydantic import BaseModel, validator
 import pedalboard
 import random
-import boto3
-import glob
-import sox
 import time
 from app.sequence_generator.generator import *
-
-
-#fx_input = '2_4_1_6_1_5'
-#index = '1_2_5_6_4_1'
-#selective_mutism_switch= 'T'
-##selective_mutism_value='0.3'
-#cloud_job_id = 'sequences_job_id_path'
-#vol = '99_99_98_99_99_99'
-#channel_mute_params= 'T_T_T_T_T_T'
-
 
 
 
