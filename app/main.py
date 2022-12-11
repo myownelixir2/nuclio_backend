@@ -1,11 +1,9 @@
 from fastapi import FastAPI, HTTPException
 import os
 import logging
-from pydantic import ValidationError, validator
 from pathlib import Path
 from starlette.responses import Response
 from starlette.requests import Request
-from fastapi.responses import JSONResponse
 from app.sequence_generator.generator import *
 from app.mixer.mixer import *
 

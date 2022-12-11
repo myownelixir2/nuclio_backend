@@ -1,29 +1,14 @@
-import json
-import re
-from turtle import st
 import pandas as pd
-import csv
-import os
 import pickle
 import librosa
 import soundfile as sf
 import numpy as np
 import math
 import pydub
-from datetime import datetime
-from typing import List, Optional, Literal
-from pydantic import BaseModel, Field, BaseSettings, validator, SecretStr
+from typing import List, Optional
 from collections import Counter
 import random
 from app.storage.storage import *
-
-
-#test_job_id_cloud = 'job_ids/2022-08-17-1660779803__1660779844-obtnscky11028TQWO.json'
-
-os.environ["STORAGE_URL"] = 'https://s3.eu-central-1.wasabisys.com'
-os.environ["STORAGE_KEY"] = 'QP0RPQHIAHOCDWITFM3N'
-os.environ["STORAGE_SECRET"] = 'zm0ufoaKHIethvU387H2F4JmF1s9GUeOoPz9zSqi'
-
 
      
 #### SEQUENCE ENGINE ####

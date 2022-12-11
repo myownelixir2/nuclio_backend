@@ -1,11 +1,7 @@
-import pandas as pd
 import os
-import librosa
-import soundfile as sf
-import numpy as np
-import pydub
-from pydantic import BaseModel, Field, BaseSettings, validator, SecretStr
+from pydantic import Field, BaseSettings, validator
 import boto3
+from typing import List
 from app.utils.utils import *
 
 
