@@ -1,5 +1,6 @@
 FROM python:3.9
 
+# trunk-ignore(hadolint/DL3009)
 RUN apt-get update \
     && apt-get install -yq  --no-install-recommends \
               whois ccache \
