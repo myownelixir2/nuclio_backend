@@ -3,8 +3,10 @@ import pickle
 import numpy as np
 import pydub
 import glob
-from app.post_fx.post_fx import *
-
+#from app.post_fx.post_fx import *
+from app.sequence_generator.generator import SequenceEngine
+from app.storage.storage import StorageEngine
+from app.utils.utils import JobConfig
 
 class MixEngine:
     def __init__(self, job_params, normalize=True):
@@ -95,7 +97,7 @@ class MixRunner:
 
     def clean_up(self):
         try:
-            current_sequences_list = glob.glob(f"temp/*")
+            current_sequences_list = glob.glob("temp/*")
             [os.remove(f) for f in current_sequences_list]
 
             return True

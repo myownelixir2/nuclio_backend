@@ -8,8 +8,9 @@ import pydub
 from typing import List, Optional
 from collections import Counter
 import random
-from app.storage.storage import *
-
+#from app.storage.storage import *
+from app.storage.storage import StorageEngine
+from app.utils.utils import JobConfig
 
 #### SEQUENCE ENGINE ####
 
@@ -38,7 +39,7 @@ class SequenceConfigRefactor:
 
         scale_value = self.job_params.get_job_params()["scale_value"]
         keynote = self.job_params.get_job_params()["key_value"]
-
+        print(scale_value, keynote)
         notes_match_table = pd.read_pickle(
             "app/sequence_generator/notes_match_table.pkl"
         )
@@ -360,7 +361,7 @@ class JobRunner:
 
     def result(self, result):
         try:
-            if result == True:
+            if result:
                 cloud_path = self.job_params.path_resolver()["cloud_path_processed"]
                 # TODO check if file exists
                 return cloud_path

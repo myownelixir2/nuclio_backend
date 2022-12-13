@@ -2,8 +2,8 @@ import os
 from pydantic import Field, BaseSettings, validator
 import boto3
 from typing import List
-from app.utils.utils import *
-
+#from app.utils.utils import *
+from app.utils.utils import JobTypeValidator
 
 class StorageCreds(BaseSettings):
     endpoint_url: str = Field(..., env="STORAGE_URL")
