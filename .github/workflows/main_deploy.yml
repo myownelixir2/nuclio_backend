@@ -2,7 +2,7 @@ name: Setup, Build & Deploy
 on:
   push:
     branches:
-      - main
+      - master
 jobs:
   docker:
     runs-on: ubuntu-latest
