@@ -20,4 +20,4 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
-          tags: euclidoo_backend:dev
+          tags: docker1private0ps/euclidoo_backend:dev
