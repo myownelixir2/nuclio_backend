@@ -24,7 +24,6 @@ class JobTypeValidator(BaseModel):
             "job_id_path",
             "processed_job_path",
             "asset_path",
-            "mixdown_job_path_master",
             "mixdown_job_path",
             "mixdown_job_path_master",
             "mixdown_job_path_pkl",
@@ -285,3 +284,15 @@ class JobCleanUp:
         file_to_rem = [pathlib.Path(f).unlink for f in files]
 
         return all(map(file_to_rem, files))
+
+def purge_all(my_paths: List[str], my_patterns: List[str]) -> bool:
+    # remove all files in temp
+    temp_path = os.path.abspath(os.path.join(*my_paths))
+    ext_types = my_patterns
+    files = itertools.chain(
+        *(glob.glob(os.path.join(temp_path, ext)) for ext in ext_types)
+    )
+    file_to_rem = [pathlib.Path(f).unlink for f in files]
+    all(map(file_to_rem, files))
+
+    return True

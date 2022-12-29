@@ -6,7 +6,7 @@ from starlette.responses import Response
 from starlette.requests import Request
 #from app.sequence_generator.generator import *
 #from app.mixer.mixer import *
-from app.utils.utils import JobConfig, JobUtils
+from app.utils.utils import JobConfig, JobUtils, purge_all
 from app.storage.storage import StorageEngine, StoreEngineMultiFile
 from app.sequence_generator.generator import JobRunner
 from app.post_fx.post_fx import FxParamsModel, FxRunner
@@ -68,7 +68,6 @@ def get_sequence(job_id: str, channel_index: int, random_id: str):
             raise HTTPException(
                 status_code=404, detail="problem with sequence generation"
             )
-
         return processed_job_id
 
     except IndexError as e:
@@ -179,6 +178,18 @@ def clean_up_temp(job_id: str, pattern: str):
         logger.error(e)
         return e
 
+
+@app.post("/purge")
+def purge():
+    try:
+        logger.info("Starting to purge temp...")
+        purge_all(["temp"], ["*.pkl", "*.mp3", "*.json"])
+        logger.info("Starting to purge assets...")
+        purge_all(["assets", "sounds"], ["*.pkl", "*.mp3", "*.wav"])
+        return True
+    except Exception as e:
+        logger.error(e)
+        return e
 
 @app.post("/add_to_favourites")
 def add_to_favourites(job_id: str):
