@@ -292,7 +292,7 @@ def purge_all(my_paths: List[str], my_patterns: List[str]) -> bool:
     files = itertools.chain(
         *(glob.glob(os.path.join(temp_path, ext)) for ext in ext_types)
     )
-    file_to_rem = [pathlib.Path(f).unlink for f in files]
-    all(map(file_to_rem, files))
+    for f in files:
+        os.remove(f)
 
     return True

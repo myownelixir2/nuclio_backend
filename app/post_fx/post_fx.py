@@ -26,10 +26,10 @@ class FxParamsModel(BaseModel):
         return v
 
     @validator("fx_input")
-    def digit_validator(cls, v):
-        v = [x for x in v if x.isdigit()]
-        if len(v) != 6:
-            raise ValueError("fx input input is not correct")
+    def fx_input_validator(cls, v):
+        v = v.split("_")
+        if len(v) != 6 and ("0", "1", "2", "3","4","5", "F") not in v:
+            raise ValueError("mute_params is not correct")
         return v
 
     @validator("channel_index")
@@ -154,7 +154,7 @@ class FxPedalBoardEngine:
         channel_index = int(self.job_params.channel_index)
         fx_input = self.mix_params.fx_input[channel_index]
 
-        if fx_input == "None":
+        if fx_input == "F":
             print("No FX applied")
             AudioEngine(
                 self.my_sequence,
