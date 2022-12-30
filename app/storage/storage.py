@@ -6,7 +6,10 @@ from typing import List
 from app.utils.utils import JobTypeValidator
 
 class StorageCreds(BaseSettings):
-    access_key_id: str = 'MTB498L2B4RIC27GLUV3'
+    endpoint_url: str = Field(..., env="STORAGE_URL")
+    access_key_id: str = Field(..., env="STORAGE_KEY")
+    secret_access_key: str = Field(..., env="STORAGE_SECRET")
+  
 
     @validator("endpoint_url", "access_key_id", "secret_access_key")
     def creds_validator(cls, v):
