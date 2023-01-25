@@ -121,12 +121,15 @@ class VolEngine:
         else:
             my_sequence_vol_applied = np.array(my_sequence_unpacked) * vol
 
-        my_sequence_vol_applied_normalized = (
-            2.0
-            * (my_sequence_vol_applied - np.min(my_sequence_vol_applied))
-            / np.ptp(my_sequence_vol_applied)
-            - 1
-        )
+        if vol == 0:
+            my_sequence_vol_applied_normalized = my_sequence_vol_applied
+        else:
+            my_sequence_vol_applied_normalized = (
+                2.0
+                * (my_sequence_vol_applied - np.min(my_sequence_vol_applied))
+                / np.ptp(my_sequence_vol_applied)
+                - 1
+            )
 
         return my_sequence_vol_applied_normalized
 
@@ -156,11 +159,19 @@ class FxPedalBoardEngine:
 
         if fx_input == "F":
             print("No FX applied")
-            AudioEngine(
+            my_pickle = AudioEngine(
                 self.my_sequence,
                 self.job_params.path_resolver()["local_path_mixdown_pkl"],
                 normalized=True,
-            ).save_to_pkl()
+            )
+            my_pickle.save_to_pkl()
+
+            my_mp3 = AudioEngine(
+                self.my_sequence,
+                self.job_params.path_resolver()["local_path_mixdown_wav"],
+                normalized=True,
+            )
+            my_mp3.save_to_wav()
             return True
         else:
             fx = fx_mapping[int(fx_input)]
@@ -181,11 +192,20 @@ class FxPedalBoardEngine:
                 normalized_y_effected = np.interp(
                     y_effected, (y_effected.min(), y_effected.max()), (-1, +1)
                 )
-                AudioEngine(
+                my_pickle = AudioEngine(
                     normalized_y_effected,
                     self.job_params.path_resolver()["local_path_mixdown_pkl"],
                     normalized=True,
-                ).save_to_pkl()
+                )
+                my_pickle.save_to_pkl()
+
+                my_mp3 = AudioEngine(
+                    normalized_y_effected,
+                    self.job_params.path_resolver()["local_path_mixdown_wav"],
+                    normalized=True,
+                    )
+                my_mp3.save_to_wav()
+
                 return True
 
 

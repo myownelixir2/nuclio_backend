@@ -17,7 +17,8 @@ class MixEngine:
 
         dir_path = r"temp"
         bpm = self.job_params.get_job_params()["bpm"]
-        output_file = self.job_params.path_resolver()["local_path_mixdown_mp3_master"]
+        output_file = self.job_params.path_resolver()["local_path_mixdown_wav_master"]
+        #output_file = self.job_params.path_resolver()["local_path_mixdown_mp3_master"]
         random_id = self.job_params.random_id
 
         res = []
@@ -49,7 +50,7 @@ class MixEngine:
             sequence = pydub.AudioSegment(
                 y.tobytes(), frame_rate=44100, sample_width=2, channels=channels
             )
-            sequence.export(output_file, format="mp3", bitrate="128k")
+            sequence.export(output_file, format="wav", bitrate="128k")
 
             if os.path.exists(output_file):
                 print("sequences mixed")

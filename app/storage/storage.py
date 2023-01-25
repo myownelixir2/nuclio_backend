@@ -6,9 +6,12 @@ from typing import List
 from app.utils.utils import JobTypeValidator
 
 class StorageCreds(BaseSettings):
-    endpoint_url: str = Field(..., env="STORAGE_URL")
-    access_key_id: str = Field(..., env="STORAGE_KEY")
-    secret_access_key: str = Field(..., env="STORAGE_SECRET")
+    #endpoint_url: str = Field(..., env="STORAGE_URL")
+    #access_key_id: str = Field(..., env="STORAGE_KEY")
+    #secret_access_key: str = Field(..., env="STORAGE_SECRET")
+    endpoint_url: str = 'https://s3.eu-central-1.wasabisys.com'
+    access_key_id: str = 'MTB498L2B4RIC27GLUV3'
+    secret_access_key: str = 'T7zSzwzzEJcQSd0A5R2LiPwG079jf8DXhYlzQYDB'
 
     @validator("endpoint_url", "access_key_id", "secret_access_key")
     def creds_validator(cls, v):
@@ -61,8 +64,8 @@ class StorageEngine:
             return d_paths
         elif _check.job_type == "mixdown_job_path_master":
             d_paths = {
-                "cloud_path": job_paths["cloud_path_mixdown_mp3_master"],
-                "local_path": job_paths["local_path_mixdown_mp3_master"],
+                "cloud_path": job_paths["cloud_path_mixdown_wav_master"],
+                "local_path": job_paths["local_path_mixdown_wav_master"],
             }
             return d_paths
         elif _check.job_type == "mixdown_job_path_pkl":
@@ -137,7 +140,7 @@ class StoreEngineMultiFile:
         status = True
         try:
             client = self.client_init()
-            bucket = client.Bucket("sample-dump")
+            bucket = client.Bucket("favs-dump")
 
         except Exception as e:
             print(f"An error occurred while initiating an s3 client: {e}")

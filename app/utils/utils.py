@@ -78,11 +78,17 @@ class JobConfig:
         local_path_mixdown_mp3 = f"{local_path_mixdown}_{self.channel_index}.mp3"
         cloud_path_mixdown_mp3 = f"{cloud_path_mixdown}_{self.channel_index}.mp3"
 
+        local_path_mixdown_wav = f"{local_path_mixdown}_{self.channel_index}.wav"
+        cloud_path_mixdown_wav = f"{cloud_path_mixdown}_{self.channel_index}.wav"
+
         local_path_mixdown_pkl = f"{local_path_mixdown}_{self.channel_index}.pkl"
         cloud_path_mixdown_pkl = f"{cloud_path_mixdown}_{self.channel_index}.pkl"
 
         local_path_mixdown_mp3_master = f"{local_path_mixdown}_master.mp3"
         cloud_path_mixdown_mp3_master = f"{cloud_path_mixdown}_master.mp3"
+
+        local_path_mixdown_wav_master = f"{local_path_mixdown}_master.wav"
+        cloud_path_mixdown_wav_master = f"{cloud_path_mixdown}_master.wav"
 
         paths_dict = {
             "cloud_path": self.job_id,
@@ -95,10 +101,14 @@ class JobConfig:
             "local_path_pre_mixdown_pkl": local_path_pre_mixdown_pkl,
             "local_path_mixdown_pkl": local_path_mixdown_pkl,
             "cloud_path_mixdown_pkl": cloud_path_mixdown_pkl,
+            "local_path_mixdown_wav" : local_path_mixdown_wav,
+            "cloud_path_mixdown_wav" : cloud_path_mixdown_wav,
             "local_path_mixdown_mp3": local_path_mixdown_mp3,
             "cloud_path_mixdown_mp3": cloud_path_mixdown_mp3,
             "local_path_mixdown_mp3_master": local_path_mixdown_mp3_master,
             "cloud_path_mixdown_mp3_master": cloud_path_mixdown_mp3_master,
+            "local_path_mixdown_wav_master": local_path_mixdown_wav_master,
+            "cloud_path_mixdown_wav_master": cloud_path_mixdown_wav_master,
             "sanitized_job_id": sanitized_job_id,
         }
         return paths_dict

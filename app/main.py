@@ -183,7 +183,7 @@ def clean_up_temp(job_id: str, pattern: str):
 def purge():
     try:
         logger.info("Starting to purge temp...")
-        purge_all(["temp"], ["*.pkl", "*.mp3", "*.json"])
+        purge_all(["temp"], ["*.pkl", "*.mp3", "*.wav", "*.json"])
         logger.info("Starting to purge assets...")
         purge_all(["assets", "sounds"], ["*.pkl", "*.mp3", "*.wav"])
         return True
@@ -194,22 +194,25 @@ def purge():
 @app.post("/add_to_favourites")
 def add_to_favourites(job_id: str):
     logger.info("Uploading favourites to cloud...")
-    try:
+    gather_assets_job = JobUtils(job_id)
+    sanitized_job_id = gather_assets_job.sanitize_job_id()
+    matching_files = gather_assets_job.list_files_matching_pattern(
+        ["*.wav", "*.json"], "temp", sanitized_job_id
+    )
+    if not matching_files:
+        raise HTTPException(status_code=404, detail="Did not find any items with provided job_id")
 
-        gather_assets_job = JobUtils(job_id)
-        sanitized_job_id = gather_assets_job.sanitize_job_id()
-        matching_files = gather_assets_job.list_files_matching_pattern(
-            ["*.mp3", "*.pkl", "*.json"], "temp", sanitized_job_id
-        )
-        print(matching_files)
+    print(matching_files)
+    try:
         multi_file_upload_job = StoreEngineMultiFile(job_id)
 
+        upload_path = "steams" + "/" + sanitized_job_id.split('__')[0]
+
         status = multi_file_upload_job.upload_list_of_objects(
-            matching_files, "my_favourites"
+            matching_files, upload_path
         )
     except Exception as e:
         logger.error(e)
-        print(e)
         status = False
 
     return status
