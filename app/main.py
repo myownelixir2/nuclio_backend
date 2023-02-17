@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 import os
+import re
 import logging
 from pathlib import Path
 from starlette.responses import Response
@@ -155,7 +156,24 @@ def clean_up_assets(job_id: str):
 
 
 @app.post("/clean_up_temp")
-def clean_up_temp(job_id: str, pattern: str):
+def clean_up_temp(job_id: str, pattern: str, random_id: str):
+    """
+    It will remove all files anti-matching the pattern in the temp folder.
+    What it means, is that when you request a mixdown, it
+    will remove all the other files, retaining only the latest mixdown.
+    Like this it will keep the folder clean and only the latest mixdown 
+    will be available.
+    Args:
+        job_id (str): job_id 
+        pattern (str): patern for example "mixdown", "sequence", "fx", "all"
+        random_id (str): random_id generate when requesting mixdown job
+
+    Raises:
+        HTTPException: if wrong pattern
+
+    Returns:
+        _type_: _description_
+    """
     try:
         logger.info("Starting to clean up assets...")
 
@@ -169,9 +187,13 @@ def clean_up_temp(job_id: str, pattern: str):
             else:
                 raise HTTPException(status_code=404, detail="pattern not supported")
         matching_files = clean_up_job.list_files_matching_pattern(
-            ["*.mp3", "*.pkl", "*.json"], "temp", patterns_to_match
+            ["*.wav", "*.pkl"], "temp", patterns_to_match
         )
-        res = clean_up_job.remove_files(matching_files)
+
+        regex = re.compile(f".*{random_id}.*")
+        anti_matching_files = [f for f in matching_files if not regex.match(f)]
+
+        res = clean_up_job.remove_files(anti_matching_files)
         logger.info("Finished cleaning up assets...")
         return res
     except Exception as e:
