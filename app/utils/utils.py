@@ -195,8 +195,7 @@ class JobUtils:
         success = True
         for f in files:
             try:
-                file_to_remove = pathlib.Path(f)
-                file_to_remove.unlink()
+                os.remove(f)
             except OSError as e:
                 print("Error: %s : %s" % (f, e.strerror))
                 success = False
@@ -306,3 +305,5 @@ def purge_all(my_paths: List[str], my_patterns: List[str]) -> bool:
         os.remove(f)
 
     return True
+
+
