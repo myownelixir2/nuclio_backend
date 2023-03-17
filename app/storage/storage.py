@@ -1,4 +1,8 @@
+import io
+import zipfile
+from botocore.exceptions import ClientError
 import os
+import numpy as np
 from pydantic import Field, BaseSettings, validator
 import boto3
 from typing import List
@@ -9,6 +13,9 @@ class StorageCreds(BaseSettings):
     endpoint_url: str = Field(..., env="STORAGE_URL")
     access_key_id: str = Field(..., env="STORAGE_KEY")
     secret_access_key: str = Field(..., env="STORAGE_SECRET")
+    endpoint_url='https://s3.eu-central-1.wasabisys.com'
+    access_key_id='MTB498L2B4RIC27GLUV3'
+    secret_access_key='T7zSzwzzEJcQSd0A5R2LiPwG079jf8DXhYlzQYDB'
 
     @validator("endpoint_url", "access_key_id", "secret_access_key")
     def creds_validator(cls, v):
@@ -152,3 +159,80 @@ class StoreEngineMultiFile:
                     )
                     status = False
         return status
+
+class StorageEngineDownloader:
+    def __init__(self, bucket):
+        self.bucket = bucket
+
+    def resource_init(self):
+        try:
+            self.resource = boto3.resource(
+                "s3",
+                endpoint_url=StorageCreds().endpoint_url,
+                aws_access_key_id=StorageCreds().access_key_id,
+                aws_secret_access_key=StorageCreds().secret_access_key,
+            )
+            return self.resource
+        except Exception as e:
+            print(e)
+            return False
+        
+    def client_init(self):
+        try:
+            self.client = boto3.client(
+                "s3",
+                endpoint_url=StorageCreds().endpoint_url,
+                aws_access_key_id=StorageCreds().access_key_id,
+                aws_secret_access_key=StorageCreds().secret_access_key,
+            )
+            return self.client
+        except Exception as e:
+            print(e)
+            return False
+        
+    def filter_objects(self, prefix_):
+        resource = self.resource_init()
+        my_bucket = resource.Bucket(self.bucket)
+        files_list = []
+        for f in my_bucket.objects.filter(Prefix=prefix_):
+            files_list.append(f.key)
+            print(f)
+        my_files = np.array(files_list)
+        return my_files
+
+    def create_zip_file(self, my_files):
+        client = self.resource_init()
+        in_memory_zip = io.BytesIO()
+        with zipfile.ZipFile(in_memory_zip, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+            for obj in my_files:
+                file = client.get_object(Bucket=self.bucket, Key=obj)
+                archive.writestr(obj, file["Body"].read())
+        in_memory_zip.seek(0)
+        return in_memory_zip
+
+    def get_presigned_url(self, file_name, expires_in=15):
+        client = self.client_init()
+        try:
+            response = client.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": self.bucket, "Key": file_name},
+                ExpiresIn=expires_in,
+            )
+        except ClientError as e:
+            print(e)
+            return None
+        return response
+
+    def upload_and_get_presigned_url(self, zip_name, in_memory_zip, expires_in=300):
+        client = self.client_init()
+        client.upload_fileobj(in_memory_zip, self.bucket, zip_name)
+        try:
+            response = client.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": self.bucket, "Key": zip_name},
+                ExpiresIn=expires_in,
+            )
+        except ClientError as e:
+            print(e)
+            return None
+        return response

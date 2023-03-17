@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 import os
 import re
 import logging
@@ -8,17 +8,19 @@ from starlette.requests import Request
 #from app.sequence_generator.generator import *
 #from app.mixer.mixer import *
 from app.utils.utils import JobConfig, JobUtils, purge_all
-from app.storage.storage import StorageEngine, StoreEngineMultiFile
+from app.storage.storage import StorageEngine, StoreEngineMultiFile, StorageEngineDownloader
 from app.sequence_generator.generator import JobRunner
 from app.post_fx.post_fx import FxParamsModel, FxRunner
 from app.mixer.mixer import MixRunner
-
+from app.users.auth import get_current_user, FirebaseSettings, UserInDB
 
 # logger config
 logger = logging.getLogger(__name__)
-
+os.environ["FIREBASE_CREDENTIAL_PATH"] = "/Users/wojciechbednarz/Desktop/python_projects/euclidean_rhythm_generator_mobile_python_fastapi/env/firebase_creds.json"
+firebase_settings = FirebaseSettings()
 
 app = FastAPI()
+
 
 
 async def catch_exceptions_middleware(request: Request, call_next):
@@ -32,13 +34,14 @@ async def catch_exceptions_middleware(request: Request, call_next):
 app.middleware("http")(catch_exceptions_middleware)
 
 
-@app.get("/")
-def home():
+@app.get("/hello")
+def home(current_user: UserInDB = Depends(get_current_user)):
     return os.getcwd()
 
 
 @app.post("/job")
-def job_id(job_id: str):
+def job_id(job_id: str,
+           current_user: UserInDB = Depends(get_current_user)):
 
     logger.info("fetching job id...")
     job_params = JobConfig(job_id, 0, random_id="")
@@ -56,7 +59,10 @@ def job_id(job_id: str):
 
 
 @app.post("/get_sequence")
-def get_sequence(job_id: str, channel_index: int, random_id: str):
+def get_sequence(job_id: str, 
+                 channel_index: int, 
+                 random_id: str, 
+                 current_user: UserInDB = Depends(get_current_user)):
     try:
         logger.info("Starting to build sequence...")
         job = JobRunner(job_id, channel_index, random_id)
@@ -86,6 +92,7 @@ def apply_fx(
     vol: str,
     channel_mute_params: str,
     selective_mutism_value: str,
+    current_user: UserInDB = Depends(get_current_user)
 ):
 
     mix_params = FxParamsModel(
@@ -118,7 +125,9 @@ def apply_fx(
 
 
 @app.post("/mix_sequences")
-def mix_sequences(job_id: str, random_id: str):
+def mix_sequences(job_id: str, 
+                  random_id: str,
+                  current_user: UserInDB = Depends(get_current_user)):
     try:
         logger.info("Starting to mix sequences...")
 
@@ -139,7 +148,8 @@ def mix_sequences(job_id: str, random_id: str):
 
 
 @app.post("/clean_up_assets")
-def clean_up_assets(job_id: str):
+def clean_up_assets(job_id: str,
+                    current_user: UserInDB = Depends(get_current_user)):
     try:
         logger.info("Starting to clean up assets...")
         clean_up_job = JobUtils(job_id)
@@ -156,7 +166,10 @@ def clean_up_assets(job_id: str):
 
 
 @app.post("/clean_up_temp")
-def clean_up_temp(job_id: str, pattern: str, random_id: str):
+def clean_up_temp(job_id: str, 
+                  pattern: str, 
+                  random_id: str,
+                  current_user: UserInDB = Depends(get_current_user)):
     """
     It will remove all files anti-matching the pattern in the temp folder.
     What it means, is that when you request a mixdown, it
@@ -202,7 +215,7 @@ def clean_up_temp(job_id: str, pattern: str, random_id: str):
 
 
 @app.post("/purge")
-def purge():
+def purge(current_user: UserInDB = Depends(get_current_user)):
     try:
         logger.info("Starting to purge temp...")
         purge_all(["temp"], ["*.pkl", "*.mp3", "*.wav", "*.json"])
@@ -214,7 +227,8 @@ def purge():
         return e
 
 @app.post("/add_to_favourites")
-def add_to_favourites(job_id: str):
+def add_to_favourites(job_id: str,
+                      current_user: UserInDB = Depends(get_current_user)):
     logger.info("Uploading favourites to cloud...")
     gather_assets_job = JobUtils(job_id)
     sanitized_job_id = gather_assets_job.sanitize_job_id()
@@ -238,3 +252,30 @@ def add_to_favourites(job_id: str):
         status = False
 
     return status
+
+@app.post("/download_from_favourites")
+def download_from_favourites(bucket: str,
+                             prefix_: str,
+                             current_user: UserInDB = Depends(get_current_user)):
+    downloader = StorageEngineDownloader(bucket)
+
+    prefix = f"{prefix_}"
+    zip_name = f"zip/{prefix_}.zip"
+
+    my_files = downloader.filter_objects(prefix)
+
+    in_memory_zip = downloader.create_zip_file(my_files)
+
+    download_url = downloader.upload_and_get_presigned_url(zip_name, in_memory_zip)
+
+    return(download_url)
+
+@app.post("/download_universal")
+def download_universal(bucket: str,
+                       file_name: str,
+                       current_user: UserInDB = Depends(get_current_user)):
+    downloader = StorageEngineDownloader(bucket)
+
+    download_url = downloader.get_presigned_url(file_name, 15)
+
+    return(download_url)
