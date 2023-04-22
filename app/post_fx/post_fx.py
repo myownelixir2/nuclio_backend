@@ -9,6 +9,7 @@ import time
 from app.sequence_generator.generator import SequenceEngine, AudioEngine
 from app.storage.storage import StorageEngine
 from app.utils.utils import JobConfig
+import glob
 
 class FxParamsModel(BaseModel):
     job_id: str
@@ -152,11 +153,11 @@ class FxPedalBoardEngine:
 
     def apply_pedalboard_fx(self):
 
-        fx_mapping = ["Bitcrush", "Chorus", "Delay", "Phaser", "Reverb", "Distortion"]
+        fx_mapping = ["Bitcrush", "Chorus", "Delay", "Phaser", "Reverb", "Distortion", "VST_Portal"]
 
         channel_index = int(self.job_params.channel_index)
         fx_input = self.mix_params.fx_input[channel_index]
-
+        
         if fx_input == "F":
             print("No FX applied")
             my_pickle = AudioEngine(
@@ -174,12 +175,40 @@ class FxPedalBoardEngine:
             my_mp3.save_to_wav()
             return True
         else:
+
             fx = fx_mapping[int(fx_input)]
+            print("printing FX debug", fx)
+            if("VST" in fx):
+                print("using VST FX plugin...")
+                my_vst = fx.split("_")
+                my_vst = my_vst[1]
+                
+                root_folder = os.path.dirname(os.path.abspath(__file__))
+                root_folder_sanitized = root_folder.rsplit("/", 2)[0]
+                
+                main_path = root_folder_sanitized + "/assets/vsts/" + my_vst.lower() + "/" 
+                vst_path = main_path + my_vst + ".vst3"
+                presets_path = main_path + "presets/"
+                
+                if(os.path.exists(vst_path)):
+                    print("VST found...")
+                    vst = pedalboard.load_plugin(vst_path)
+                    
+                    my_presets = os.listdir(presets_path)
+                    selected_preset = presets_path + random.choice(my_presets)
+                    vst.load_preset(selected_preset)
+                    
+                    board = pedalboard.Pedalboard([vst])
+                    
+                else:
+                    print("VST not found...")
+                    return False
+            else:
 
-            validated_fx = FxPedalBoardConfig.parse_obj({"audio_fx": fx})
+                validated_fx = FxPedalBoardConfig.parse_obj({"audio_fx": fx})
 
-            pedalboard_fx = getattr(pedalboard, validated_fx.audio_fx)
-            board = pedalboard.Pedalboard([pedalboard_fx()])
+                pedalboard_fx = getattr(pedalboard, validated_fx.audio_fx)
+                board = pedalboard.Pedalboard([pedalboard_fx()])
 
             try:
                 effected = board(self.my_sequence, 44100.0)

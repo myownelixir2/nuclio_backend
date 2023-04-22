@@ -3,9 +3,14 @@ import zipfile
 from botocore.exceptions import ClientError
 import os
 import numpy as np
+import pandas as pd
 from pydantic import Field, BaseSettings, validator
 import boto3
+import pydub
 from typing import List
+import time
+import string
+import random
 #from app.utils.utils import *
 from app.utils.utils import JobTypeValidator
 
@@ -13,10 +18,7 @@ class StorageCreds(BaseSettings):
     endpoint_url: str = Field(..., env="STORAGE_URL")
     access_key_id: str = Field(..., env="STORAGE_KEY")
     secret_access_key: str = Field(..., env="STORAGE_SECRET")
-    endpoint_url='https://s3.eu-central-1.wasabisys.com'
-    access_key_id='MTB498L2B4RIC27GLUV3'
-    secret_access_key='T7zSzwzzEJcQSd0A5R2LiPwG079jf8DXhYlzQYDB'
-
+    
     @validator("endpoint_url", "access_key_id", "secret_access_key")
     def creds_validator(cls, v):
 
@@ -116,8 +118,7 @@ class StorageEngine:
         except Exception as e:
             print(e)
             return False
-
-
+        
 class StoreEngineMultiFile:
     def __init__(self, job_id):
         self.job_id: str = job_id
@@ -189,19 +190,70 @@ class StorageEngineDownloader:
         except Exception as e:
             print(e)
             return False
-        
+
+    def copy_objects(self, source_key: str, destination_key: str):
+        client = self.client_init()
+        client.copy_object(Bucket=self.bucket,
+                           Key=destination_key, CopySource=f"{self.bucket}/{source_key}")
+        return True
+
+    def download_in_memory_objects(self, key: str) -> io.BytesIO:
+        client = self.resource_init()
+        obj = client.get_object(Bucket=self.bucket, Key=key)
+        file_data = io.BytesIO(obj["Body"].read())
+        return file_data
+
+    def create_arrangement_file(self, my_files: List[str], format="wav"):
+        client = self.client_init()
+        concatenated_audio = pydub.AudioSegment.empty()
+        for obj in my_files:
+            file = client.get_object(Bucket=self.bucket, Key=obj)
+            file_data = file["Body"].read()
+            file_like_object = io.BytesIO(file_data)
+            audio_data = pydub.AudioSegment.from_file(file_like_object, format=format)
+            concatenated_audio += audio_data
+
+        in_memory_arrangement = io.BytesIO()
+        concatenated_audio.export(in_memory_arrangement, format="wav")
+        in_memory_arrangement.seek(0)
+        return in_memory_arrangement
+
+    def upload_in_memory_object(self, output_file: str, in_memory_object: io.BytesIO):
+        try:
+            client = self.client_init()
+            client.upload_fileobj(in_memory_object, self.bucket, output_file)
+        except ClientError as e:
+            print(e)
+            return None
+        return output_file
+
     def filter_objects(self, prefix_):
         resource = self.resource_init()
         my_bucket = resource.Bucket(self.bucket)
         files_list = []
         for f in my_bucket.objects.filter(Prefix=prefix_):
             files_list.append(f.key)
-            print(f)
         my_files = np.array(files_list)
         return my_files
 
+    @staticmethod
+    def generate_random_string(length):
+        letters = string.ascii_lowercase
+        return ''.join(random.choice(letters) for i in range(length))
+
+
+    @staticmethod
+    def filter_files(file_list, suffix, mixdown_ids):
+        filtered_list = []
+        for file in file_list:
+            if file.endswith(suffix):
+                if any(id_str in file for id_str in mixdown_ids):
+                    filtered_list.append(file)
+        return filtered_list
+
     def create_zip_file(self, my_files):
-        client = self.resource_init()
+        #client = self.resource_init()
+        client = self.client_init()
         in_memory_zip = io.BytesIO()
         with zipfile.ZipFile(in_memory_zip, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
             for obj in my_files:
