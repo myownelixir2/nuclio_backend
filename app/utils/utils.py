@@ -49,6 +49,15 @@ class JobConfig:
         self.job_id = job_id
         self.channel_index = channel_index
         self.random_id = random_id
+    
+    @staticmethod
+    def has_initial_index(file_path):
+        try:
+            with open(file_path, 'r') as file:
+                json_obj = json.load(file)
+                return isinstance(json_obj, list) and len(json_obj) > 0
+        except (ValueError, FileNotFoundError):
+            return False
 
     def path_resolver(self):
 
@@ -115,13 +124,20 @@ class JobConfig:
 
     def __psuedo_json_to_dict(self):
         paths = self.path_resolver()
-        with open(paths["local_path"], "r") as lst:
-            json_psudo = json.load(lst)
-            json_sanitized = re.sub(
-                r'("\s*:\s*)undefined(\s*[,}])', "\\1null\\2", json_psudo[0]
-            )
-            json_dict = json.loads(json_sanitized)
+        inital_index = self.has_initial_index(paths["local_path"])
+        if(inital_index):
+            with open(paths["local_path"], "r") as lst:
+                json_psudo = json.load(lst)
+                json_sanitized = re.sub(
+                    r'("\s*:\s*)undefined(\s*[,}])', "\\1null\\2", json_psudo[0]
+                )
+                json_dict = json.loads(json_sanitized)
+        else:
+            with open(paths["local_path"], "r") as lst:
+                json_dict = json.load(lst)
+
         return json_dict
+    
 
     def get_job_params(self):
         job_id_dict = self.__psuedo_json_to_dict()
@@ -305,5 +321,9 @@ def purge_all(my_paths: List[str], my_patterns: List[str]) -> bool:
         os.remove(f)
 
     return True
+
+
+
+
 
 

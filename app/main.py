@@ -1,10 +1,11 @@
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, Body
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 import os
 import re
 import logging
 import pandas as pd
+import json
 from pathlib import Path
 from starlette.responses import Response
 from starlette.requests import Request
@@ -43,23 +44,44 @@ def home(current_user: UserInDB = Depends(get_current_user)):
     return os.getcwd()
 
 
+@app.post("/create_job")
+def create_job(job_id: str,
+               payload: dict = Body(...),
+               urrent_user: UserInDB = Depends(get_current_user)):
+    print(payload)
+    try:
+        job_params = JobConfig(job_id, 0, random_id="")
+        local_path = job_params.path_resolver()['local_path']  
+        
+        with open(local_path, 'w') as fp:
+            json.dump(payload, fp)
+        
+        my_storage = StorageEngine(job_params, "job_id_path")
+        my_storage.client_init()
+        my_storage.upload_object()
+        return True
+    except Exception:
+        raise HTTPException(status_code=404, detail="problem with Job creation")
+
 @app.post("/job")
 def job_id(job_id: str,
            current_user: UserInDB = Depends(get_current_user)):
-
     logger.info("fetching job id...")
     job_params = JobConfig(job_id, 0, random_id="")
     my_storage = StorageEngine(job_params, "job_id_path")
     my_storage.client_init()
-    my_storage.get_object()
 
-    try:
-        job_id_file = Path(job_params.path_resolver()["local_path"])
-        job_id_file.resolve(strict=True)
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="Job ID not found")
-    else:
-        return {"job_id": job_id}
+    local_path = job_params.path_resolver()["local_path"]
+    job_id_file = Path(local_path)
+
+    if not job_id_file.exists():
+        try:
+            my_storage.get_object()
+            job_id_file.resolve(strict=True)
+        except FileNotFoundError:
+            raise HTTPException(status_code=404, detail="Job ID not found")
+
+    return {"job_id": job_id}
 
 
 @app.post("/get_sequence")

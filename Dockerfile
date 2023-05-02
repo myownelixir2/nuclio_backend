@@ -5,6 +5,7 @@ RUN apt-get update \
     && apt-get install -yq  --no-install-recommends \
               whois ccache \
               libssl-dev libcurl4-openssl-dev \
+              libpq-dev \
                   libssh2-1-dev libxml2-dev libcairo2-dev \
                   libsndfile1-dev \
                   ffmpeg \

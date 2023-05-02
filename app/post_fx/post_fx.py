@@ -152,90 +152,100 @@ class FxPedalBoardEngine:
         self.my_sequence = my_sequence
 
     def apply_pedalboard_fx(self):
-
-        fx_mapping = ["Bitcrush", "Chorus", "Delay", "Phaser", "Reverb", "Distortion", "VST_Portal"]
-
         channel_index = int(self.job_params.channel_index)
         fx_input = self.mix_params.fx_input[channel_index]
-        
+
         if fx_input == "F":
             print("No FX applied")
-            my_pickle = AudioEngine(
-                self.my_sequence,
-                self.job_params.path_resolver()["local_path_mixdown_pkl"],
-                normalized=True,
-            )
-            my_pickle.save_to_pkl()
-
-            my_mp3 = AudioEngine(
-                self.my_sequence,
-                self.job_params.path_resolver()["local_path_mixdown_wav"],
-                normalized=True,
-            )
-            my_mp3.save_to_wav()
+            self.save_audio(self.my_sequence)
             return True
         else:
-
-            fx = fx_mapping[int(fx_input)]
-            print("printing FX debug", fx)
-            if("VST" in fx):
-                print("using VST FX plugin...")
-                my_vst = fx.split("_")
-                my_vst = my_vst[1]
-                
-                root_folder = os.path.dirname(os.path.abspath(__file__))
-                root_folder_sanitized = root_folder.rsplit("/", 2)[0]
-                
-                main_path = root_folder_sanitized + "/assets/vsts/" + my_vst.lower() + "/" 
-                vst_path = main_path + my_vst + ".vst3"
-                presets_path = main_path + "presets/"
-                
-                if(os.path.exists(vst_path)):
-                    print("VST found...")
-                    vst = pedalboard.load_plugin(vst_path)
-                    
-                    my_presets = os.listdir(presets_path)
-                    selected_preset = presets_path + random.choice(my_presets)
-                    vst.load_preset(selected_preset)
-                    
-                    board = pedalboard.Pedalboard([vst])
-                    
-                else:
-                    print("VST not found...")
-                    return False
-            else:
-
-                validated_fx = FxPedalBoardConfig.parse_obj({"audio_fx": fx})
-
-                pedalboard_fx = getattr(pedalboard, validated_fx.audio_fx)
-                board = pedalboard.Pedalboard([pedalboard_fx()])
-
-            try:
-                effected = board(self.my_sequence, 44100.0)
-            except Exception as e:
-                print(e)
+            fx_board, fx = self.build_pedalboard(fx_input)
+            if not fx_board:
                 return False
 
+            effected_audio = self.apply_fx_to_audio(fx_board, fx)
+            if effected_audio is None:
+                return False
+
+            self.save_audio(effected_audio)
+            return True
+
+    def build_pedalboard(self, fx_input):
+        fx_mapping = ["Bitcrush", "Chorus", "Delay", "Phaser", "Reverb", "Distortion", "VST_Portal"]
+        fx = fx_mapping[int(fx_input)]
+        print("printing FX debug", fx)
+
+        if "VST" in fx:
+            board = self.build_vst_pedalboard(fx)
+        else:
+            board = self.build_standard_pedalboard(fx)
+        return board, fx
+
+    def build_vst_pedalboard(self, fx):
+        print("using VST FX plugin...")
+        my_vst = fx.split("_")[1]
+
+        root_folder = os.path.dirname(os.path.abspath(__file__))
+        root_folder_sanitized = root_folder.rsplit("/", 2)[0]
+
+        main_path = root_folder_sanitized + "/assets/vsts/" + my_vst.lower() + "/"
+        vst_path = main_path + my_vst + ".vst3"
+        presets_path = main_path + "presets/"
+
+        if os.path.exists(vst_path):
+            print("VST found...")
+            vst = pedalboard.load_plugin(vst_path)
+
+            my_presets = os.listdir(presets_path)
+            selected_preset = presets_path + random.choice(my_presets)
+            vst.load_preset(selected_preset)
+
+            board = pedalboard.Pedalboard([vst])
+            return board
+        else:
+            print("VST not found...")
+            return None
+
+    def build_standard_pedalboard(self, fx):
+        validated_fx = FxPedalBoardConfig.parse_obj({"audio_fx": fx})
+        pedalboard_fx = getattr(pedalboard, validated_fx.audio_fx)
+        board = pedalboard.Pedalboard([pedalboard_fx()])
+        return board
+    
+    def apply_fx_to_audio(self, fx_board, fx):
+        try:
+            if "VST" in fx:
+                print('applying vst effect...')
+                mono_input = self.my_sequence
+                print(mono_input)
+                stereo_audio = np.column_stack((mono_input, mono_input))
+                stereo_output = fx_board(stereo_audio, 44100.0)
+                effected = np.mean(stereo_output, axis=1)
             else:
-                y_effected = np.int16(effected * 2**15)
-                normalized_y_effected = np.interp(
-                    y_effected, (y_effected.min(), y_effected.max()), (-1, +1)
-                )
-                my_pickle = AudioEngine(
-                    normalized_y_effected,
-                    self.job_params.path_resolver()["local_path_mixdown_pkl"],
-                    normalized=True,
-                )
-                my_pickle.save_to_pkl()
+                effected = fx_board(self.my_sequence, 44100.0)
+        except Exception as e:
+            print(e)
+            return None
+        else:
+            y_effected = np.int16(effected * 2**15)
+            normalized_y_effected = np.interp(y_effected, (y_effected.min(), y_effected.max()), (-1, +1))
+            return normalized_y_effected
 
-                my_mp3 = AudioEngine(
-                    normalized_y_effected,
-                    self.job_params.path_resolver()["local_path_mixdown_wav"],
-                    normalized=True,
-                    )
-                my_mp3.save_to_wav()
+    def save_audio(self, audio_data):
+        my_pickle = AudioEngine(
+            audio_data,
+            self.job_params.path_resolver()["local_path_mixdown_pkl"],
+            normalized=True,
+        )
+        my_pickle.save_to_pkl()
 
-                return True
+        my_wav = AudioEngine(
+            audio_data,
+            self.job_params.path_resolver()["local_path_mixdown_wav"],
+            normalized=True,
+        )
+        my_wav.save_to_wav()
 
 
 class FxEngine:
@@ -365,3 +375,6 @@ class FxRunner:
 
         except Exception as e:
             print(e)
+
+
+
