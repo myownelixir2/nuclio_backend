@@ -12,7 +12,10 @@ from starlette.requests import Request
 #from app.sequence_generator.generator import *
 #from app.mixer.mixer import *
 from app.utils.utils import JobConfig, JobUtils, purge_all
-from app.storage.storage import StorageEngine, StoreEngineMultiFile, StorageEngineDownloader
+from app.storage.storage import (StorageEngine, 
+                                 StoreEngineMultiFile, 
+                                 StorageEngineDownloader, 
+                                 SnapshotManager)
 from app.sequence_generator.generator import JobRunner
 from app.post_fx.post_fx import FxParamsModel, FxRunner
 from app.mixer.mixer import MixRunner
@@ -462,3 +465,13 @@ def get_playlist_stats(current_user: UserInDB = Depends(get_current_user)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     return JSONResponse(content=serialize_my_files)
+
+@app.post("/build_snapshots")
+def build_snapshots(bucket: str, current_user: UserInDB = Depends(get_current_user)):
+    snapshot_manager = SnapshotManager(bucket)
+    
+    if snapshot_manager.build_snapshot() and snapshot_manager.get_snapshot_data():
+        url_1, url_2 = snapshot_manager.generate_presigned_urls()
+        return {"snapshot_url": url_1, "snapshot_files_url": url_2}
+    else:
+        return {"error": "Failed to build snapshots and generate presigned URLs"}

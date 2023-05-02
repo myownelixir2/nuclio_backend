@@ -19,6 +19,7 @@ class StorageCreds(BaseSettings):
     access_key_id: str = Field(..., env="STORAGE_KEY")
     secret_access_key: str = Field(..., env="STORAGE_SECRET")
     
+
     @validator("endpoint_url", "access_key_id", "secret_access_key")
     def creds_validator(cls, v):
 
@@ -103,6 +104,17 @@ class StorageEngine:
         try:
             _type = self.__resolve_type()
             os.remove(_type["local_path"])
+            return True
+        except Exception as e:
+            print(e)
+            return False
+    
+    
+    def upload_object_local(self, local_path, cloud_path):
+        try:
+            client = self.client_init()
+            bucket = client.Bucket("sample-dump")
+            bucket.upload_file(local_path, cloud_path)
             return True
         except Exception as e:
             print(e)
@@ -288,3 +300,93 @@ class StorageEngineDownloader:
             print(e)
             return None
         return response
+
+
+class SnapshotManager:
+    def __init__(self, bucket_name):
+        self.bucket = bucket_name
+        self.resource = self.resource_init()
+        self.client = self.client_init()
+        self.bucket_obj = self.resource.Bucket(self.bucket)
+        self.snapshot_df = None
+        self.snapshot_files_df = None
+
+    def resource_init(self):
+        try:
+            resource = boto3.resource(
+                "s3",
+                endpoint_url=StorageCreds().endpoint_url,
+                aws_access_key_id=StorageCreds().access_key_id,
+                aws_secret_access_key=StorageCreds().secret_access_key,
+            )
+            return resource
+        except Exception as e:
+            print(e)
+            return False
+
+    def client_init(self):
+        try:
+            client = boto3.client(
+                "s3",
+                endpoint_url=StorageCreds().endpoint_url,
+                aws_access_key_id=StorageCreds().access_key_id,
+                aws_secret_access_key=StorageCreds().secret_access_key,
+            )
+            return client
+        except Exception as e:
+            print(e)
+            return False
+        
+    def build_snapshot(self):
+        try:
+            files_list = [f.key for f in self.bucket_obj.objects.all()]
+            self.snapshot_df = pd.DataFrame(files_list, columns=['paths'])
+
+            # Save the snapshot_df to a CSV in memory
+            csv_buffer = io.StringIO()
+            self.snapshot_df.to_csv(csv_buffer, index=False)
+
+            # Upload the CSV to S3
+            s3_key = 'database_snapshot.csv'
+            self.resource.Object('snapshots-dump', s3_key).put(Body=csv_buffer.getvalue())
+            return True
+        except ClientError as e:
+            print(f"Error building snapshot: {e}")
+            return False
+
+    def get_snapshot_data(self):
+        try:
+            if self.snapshot_df is None:
+                # Read the snapshot CSV from S3
+                s3_key = 'database_snapshot.csv'
+                csv_obj = self.resource.Object(self.bucket, s3_key).get()['Body']
+                csv_buffer = io.StringIO(csv_obj.read().decode('utf-8'))
+                self.snapshot_df = pd.read_csv(csv_buffer)
+
+            self.snapshot_files_df = self.snapshot_df[self.snapshot_df['paths'].str.endswith('.mp3')].copy()
+            self.snapshot_files_df['bucket'] = self.bucket
+            self.snapshot_files_df[['label', 'file']] = self.snapshot_files_df['paths'].str.split('/', expand=True)
+            
+            # Filter out specific labels
+            filter_out = ["sequences", "favourite", "my_favourites", "mixdown"]
+            self.snapshot_files_df = self.snapshot_files_df[~self.snapshot_files_df['label'].isin(filter_out)]
+
+            # Save the snapshot_files_df to a CSV in memory
+            csv_buffer = io.StringIO()
+            self.snapshot_files_df.to_csv(csv_buffer, index=False)
+
+            # Upload the CSV to S3
+            s3_key = 'database_snapshot_files.csv'
+            self.resource.Object('snapshots-dump', s3_key).put(Body=csv_buffer.getvalue())
+            return True
+        except ClientError as e:
+            print(f"Error getting snapshot data: {e}")
+            return False
+
+    def generate_presigned_urls(self):
+        url_1 = self.client.generate_presigned_url('get_object', Params={'Bucket': 'snapshots-dump', 'Key': 'database_snapshot.csv'}, ExpiresIn=3600)
+        url_2 = self.client.generate_presigned_url('get_object', Params={'Bucket': 'snapshots-dump', 'Key': 'database_snapshot_files.csv'}, ExpiresIn=3600)
+        return url_1, url_2
+
+
+
