@@ -14,6 +14,7 @@ class UserInDB(BaseModel):
     
 class FirebaseSettings(BaseSettings):
     firebase_credential_json: str = Field(..., env="FIREBASE_CREDENTIAL_PATH")
+    firebase_credential_json: str = '/Users/wojciech/Documents/keys/firebase/neucl-io-firebase-adminsdk-lgz43-6121b724aa.json'
 
     def __init__(self, **data):
         super().__init__(**data)
