@@ -10,12 +10,7 @@ class DatabaseSettings(BaseSettings):
     user: str = Field(..., env="DB_USER")
     password: str = Field(..., env="DB_PASSWORD")
     port: str = Field(..., env="DB_PORT")
-    host='db.bit.io'
-    dbname='myownelixir2/neucl_io'
-    user='neucl_io_ops'
-    password='v2_3ypsF_jdyQijqmj7DFE5vxKJ5Z6Q3'
-    port='5432'
-    
+  
 
 class UserActivityDB:
     def db_conn(self):
@@ -30,6 +25,21 @@ class UserActivityDB:
         )
         return connection
     
+    def get_favourite_sessions(self, current_user_id):
+        # Fetch the favourite session records for the current user
+        query = """
+        SELECT session_id
+        FROM favourite_sessions
+        WHERE user_id = %s
+        ORDER BY created_at DESC
+        """
+        my_conn = self.db_conn()
+        with my_conn.cursor() as cursor:
+            cursor.execute(query, (current_user_id,))
+            favourite_sessions = cursor.fetchall()
+        # Extract the session ids and return as a list
+        return [session_id for (session_id,) in favourite_sessions]
+
     def update_favourite_sessions(self, current_user_id, current_session_id):
         # Fetch the existing session record, if any
         query = """
@@ -96,7 +106,7 @@ class UserActivityDB:
             """
             cursor.execute(query, (current_session_id, current_user_id))
             my_sessions = cursor.fetchall()
-            my_sessions = pd.DataFrame(my_sessions, columns=["paths", "session_id", "user_id"])  # Replace with your actual column names
+            my_sessions = pd.DataFrame(my_sessions, columns=["paths", "session_id", "user_id"])  
 
         my_sessions = my_sessions[my_sessions["paths"].str.contains("master.wav|master.mp3")]
         my_sessions = my_sessions.drop_duplicates(subset="paths", keep="first")
@@ -219,7 +229,7 @@ class UserActivityDB:
         # Insert the data into the database
         with my_conn.cursor() as cursor:
             cursor.executemany(insert_query, data_to_insert)
-            self.db_conn().commit()
+            my_conn.commit()
 
         print("song added to likes...")
         my_conn.close()
@@ -246,7 +256,7 @@ class UserActivityDB:
         # Insert the data into the database
         with my_conn.cursor() as cursor:
             cursor.executemany(insert_query, data_to_insert)
-            self.db_conn().commit()
+            my_conn.commit()
 
         print("plays updated...")
         my_conn.close()
@@ -296,3 +306,5 @@ class UserActivityDB:
         #            "session_id": merged_df['session_id'],
         #            "paths": merged_df['paths']}
         return json_res
+
+

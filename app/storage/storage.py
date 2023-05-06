@@ -18,7 +18,7 @@ class StorageCreds(BaseSettings):
     endpoint_url: str = Field(..., env="STORAGE_URL")
     access_key_id: str = Field(..., env="STORAGE_KEY")
     secret_access_key: str = Field(..., env="STORAGE_SECRET")
-    
+   
 
     @validator("endpoint_url", "access_key_id", "secret_access_key")
     def creds_validator(cls, v):

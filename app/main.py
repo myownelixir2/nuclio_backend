@@ -451,6 +451,18 @@ def get_favourites_stems(session_id: str,
 
     return my_files
 
+@app.get("/get_favourites_sessions")
+def get_favourites_sessions(current_user: UserInDB = Depends(get_current_user)):
+    try:
+        user_activity = UserActivityDB()
+        user_id = current_user.username
+
+        my_files = user_activity.get_favourite_sessions(user_id)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+    return my_files
+
 
 @app.get("/get_playlist_stats")
 def get_playlist_stats(current_user: UserInDB = Depends(get_current_user)):
