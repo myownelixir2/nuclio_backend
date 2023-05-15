@@ -12,6 +12,7 @@ enviroment/**
 env/**/
 
 tests.py
+dev.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
