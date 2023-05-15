@@ -16,6 +16,8 @@ import random
 #from app.utils.utils import *
 from app.utils.utils import JobTypeValidator
 
+
+
 class StorageCreds(BaseSettings):
     """
     A class used to manage and validate storage credentials.
@@ -56,8 +58,6 @@ class StorageCreds(BaseSettings):
             )
         return v
 
-import logging
-from botocore.exceptions import BotoCoreError, ClientError
 
 class StorageEngine:
     """
@@ -269,14 +269,13 @@ class StoreEngineMultiFile:
             self.logger.error(f"Error during S3 operations: {e}")
             raise e
 
-import boto3
-import io
-import zipfile
-from botocore.exceptions import ClientError
 
 class StorageBase:
     def __init__(self, bucket):
         self.bucket = bucket
+        self.resource = self.resource_init()  # Here resource_init is called
+        self.client = self.client_init()  # Here client_init is called
+        self.logger = logging.getLogger(__name__)  # initialize logger
 
     def resource_init(self):
         try:
@@ -423,45 +422,26 @@ class StorageEngineDownloader(StorageBase):
 
 
 
-class SnapshotManager:
+class SnapshotManager(StorageBase):
+    SNAPSHOT_CSV = 'database_snapshot.csv'
+    SNAPSHOT_FILES_CSV = 'database_snapshot_files.csv'
+    SNAPSHOTS_DUMP_BUCKET = 'snapshots-dump'
+    FILTER_OUT_LABELS = ["sequences", "favourite", "my_favourites", "mixdown"]
+
     """
     This class represents a manager for handling snapshots in Amazon S3 storage.
     """
     def __init__(self, bucket_name):
-        self.bucket = bucket_name
-        self.resource = self.resource_init()
-        self.client = self.client_init()
+        super().__init__(bucket_name)
         self.bucket_obj = self.resource.Bucket(self.bucket)
         self.snapshot_df = None
         self.snapshot_files_df = None
-
-    def resource_init(self):
-        try:
-            resource = boto3.resource(
-                "s3",
-                endpoint_url=StorageCreds().endpoint_url,
-                aws_access_key_id=StorageCreds().access_key_id,
-                aws_secret_access_key=StorageCreds().secret_access_key,
-            )
-            return resource
-        except Exception as e:
-            print(e)
-            return False
-
-    def client_init(self):
-        try:
-            client = boto3.client(
-                "s3",
-                endpoint_url=StorageCreds().endpoint_url,
-                aws_access_key_id=StorageCreds().access_key_id,
-                aws_secret_access_key=StorageCreds().secret_access_key,
-            )
-            return client
-        except Exception as e:
-            print(e)
-            return False
         
     def build_snapshot(self):
+        """
+        Builds a snapshot of all the objects in the bucket and saves it as a CSV file in S3. 
+        The snapshot is a pandas DataFrame consisting of the paths of all the files in the bucket.
+        """
         try:
             files_list = [f.key for f in self.bucket_obj.objects.all()]
             self.snapshot_df = pd.DataFrame(files_list, columns=['paths'])
@@ -471,49 +451,64 @@ class SnapshotManager:
             self.snapshot_df.to_csv(csv_buffer, index=False)
 
             # Upload the CSV to S3
-            s3_key = 'database_snapshot.csv'
-            self.resource.Object('snapshots-dump', s3_key).put(Body=csv_buffer.getvalue())
+    
+            self.resource.Object(self.SNAPSHOTS_DUMP_BUCKET, self.SNAPSHOT_CSV).put(Body=csv_buffer.getvalue())
             return True
         except ClientError as e:
-            print(f"Error building snapshot: {e}")
-            return False
+            self.logger.error(f"Error building snapshot: {e}")
+            raise e
 
     def get_snapshot_data(self):
+        """
+        Loads the snapshot data from S3, processes it, and saves the processed data back to S3.
+        The processing involves filtering out certain types of files and splitting the file paths into 'label' and 'file' columns.
+        """
         try:
-            if self.snapshot_df is None:
-                # Read the snapshot CSV from S3
-                s3_key = 'database_snapshot.csv'
-                csv_obj = self.resource.Object(self.bucket, s3_key).get()['Body']
-                csv_buffer = io.StringIO(csv_obj.read().decode('utf-8'))
-                self.snapshot_df = pd.read_csv(csv_buffer)
-
-            self.snapshot_files_df = self.snapshot_df[self.snapshot_df['paths'].str.endswith('.mp3')].copy()
-            self.snapshot_files_df['bucket'] = self.bucket
-            self.snapshot_files_df[['label', 'file']] = self.snapshot_files_df['paths'].str.split('/', expand=True)
-            
-            # Filter out specific labels
-            filter_out = ["sequences", "favourite", "my_favourites", "mixdown"]
-            self.snapshot_files_df = self.snapshot_files_df[~self.snapshot_files_df['label'].isin(filter_out)]
-
-            # Save the snapshot_files_df to a CSV in memory
-            csv_buffer = io.StringIO()
-            self.snapshot_files_df.to_csv(csv_buffer, index=False)
-
-            # Upload the CSV to S3
-            s3_key = 'database_snapshot_files.csv'
-            self.resource.Object('snapshots-dump', s3_key).put(Body=csv_buffer.getvalue())
+            self.load_snapshot_from_s3()
+            self.process_snapshot_data()
+            self.save_snapshot_files_to_s3()
             return True
         except ClientError as e:
-            print(f"Error getting snapshot data: {e}")
-            return False
+            self.logger.error(f"Error getting snapshot data: {e}")
+            raise e
+
+    def load_snapshot_from_s3(self):
+        """
+        Loads the snapshot CSV from S3 into a pandas DataFrame. If the snapshot data is already loaded, does nothing.
+        """
+
+        if self.snapshot_df is not None:
+            return
+        s3_key = self.SNAPSHOT_CSV
+        csv_obj = self.resource.Object(self.bucket, s3_key).get()['Body']
+        csv_buffer = io.StringIO(csv_obj.read().decode('utf-8'))
+        self.snapshot_df = pd.read_csv(csv_buffer)
+
+    def process_snapshot_data(self):
+        """
+        Processes the snapshot data by filtering out certain types of files and splitting the file paths into 'label' and 'file' columns.
+        """
+        self.snapshot_files_df = self.snapshot_df[self.snapshot_df['paths'].str.endswith('.mp3')].copy()
+        self.snapshot_files_df['bucket'] = self.bucket
+        self.snapshot_files_df[['label', 'file']] = self.snapshot_files_df['paths'].str.split('/', expand=True)
+        self.snapshot_files_df = self.snapshot_files_df[~self.snapshot_files_df['label'].isin(self.FILTER_OUT_LABELS)]
+
+    def save_snapshot_files_to_s3(self):
+        """
+        Saves the processed snapshot data (a DataFrame of file paths, labels, and file names) as a CSV file in S3.
+        """
+        csv_buffer = io.StringIO()
+        self.snapshot_files_df.to_csv(csv_buffer, index=False)
+        s3_key = self.SNAPSHOT_FILES_CSV
+        self.resource.Object(self.SNAPSHOTS_DUMP_BUCKET, s3_key).put(Body=csv_buffer.getvalue())
 
     def generate_presigned_urls(self):
         """
         Generate pre-signed URLs for database snapshot and snapshot files.
         """
         try:
-            url_1 = self.client.generate_presigned_url('get_object', Params={'Bucket': 'snapshots-dump', 'Key': 'database_snapshot.csv'}, ExpiresIn=3600)
-            url_2 = self.client.generate_presigned_url('get_object', Params={'Bucket': 'snapshots-dump', 'Key': 'database_snapshot_files.csv'}, ExpiresIn=3600)
+            url_1 = self.client.generate_presigned_url('get_object', Params={'Bucket': self.SNAPSHOTS_DUMP_BUCKET, 'Key': self.SNAPSHOT_CSV}, ExpiresIn=3600)
+            url_2 = self.client.generate_presigned_url('get_object', Params={'Bucket': self.SNAPSHOTS_DUMP_BUCKET, 'Key': self.SNAPSHOT_FILES_CSV}, ExpiresIn=3600)
             return url_1, url_2
         except ClientError as e:
             self.logger.error(f"Error generating presigned urls: {e}")
