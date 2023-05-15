@@ -9,11 +9,25 @@ from app.storage.storage import StorageEngine
 from app.utils.utils import JobConfig
 
 class MixEngine:
+    """
+        MixEngine class mixes audio sequences.
+        Parameters:
+        job_params (JobConfig): Contains job configuration parameters.
+        normalize (bool): If True, normalizes the audio array to be between -1 and 1. Default is True.
+
+    """
     def __init__(self, job_params, normalize=True):
         self.job_params = job_params
         self.normalized = normalize
 
     def mix_sequences_pkl(self):
+        """
+         mix_sequences_pkl(): Mixes the audio sequences.
+            - Loads the .pkl pickle files in the temp folder that start with mixdown_ and the random ID.
+            - Validates and combines the sequences.
+            - Exports the mixed audio as a .wav file.
+            - Returns True if successful, False otherwise.
+        """
 
         dir_path = r"temp"
         bpm = self.job_params.get_job_params()["bpm"]
@@ -63,6 +77,13 @@ class MixEngine:
             return False
 
     def mix_sequences(self):
+        """
+        mix_sequences(): Mixes the audio sequences.
+            - Gets the list of .mp3 files in the temp folder that start with mixdown_ and the random ID.
+            - Constructs an ffmpeg command to mix the sequences.
+            - Executes the ffmpeg command. 
+            - Returns True if successful, False otherwise.
+        """
         random_id = self.job_params.random_id
 
         current_sequences_list = glob.glob(f"temp/mixdown_{random_id}_*.mp3")
@@ -88,6 +109,13 @@ class MixEngine:
 
 
 class MixRunner:
+    """
+    MixRunner class executes the mixing process.
+
+        Parameters:
+        job_id (int): The job ID.
+        random_id (str): The random ID for the job.
+    """
     def __init__(
         self,
         job_id,
@@ -97,6 +125,9 @@ class MixRunner:
         self.random_id = random_id
 
     def clean_up(self):
+        """
+        clean_up(): Deletes all files in the temp folder. Returns True if successful, False otherwise.
+        """
         try:
             current_sequences_list = glob.glob("temp/*")
             [os.remove(f) for f in current_sequences_list]
@@ -107,6 +138,13 @@ class MixRunner:
             return False
 
     def execute(self):
+        """
+        execute(): Executes the mixing process.
+            - Gets the job parameters.
+            - Mixes the sequences using MixEngine.
+            - If successful, uploads the mixed audio file using StorageEngine.
+            - Returns True if successful, False otherwise. 
+        """
         try:
             job_params = JobConfig(self.job_id, 0, self.random_id)
             mix_ready = MixEngine(job_params, normalize=True).mix_sequences_pkl()
