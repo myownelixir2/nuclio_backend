@@ -448,6 +448,36 @@ class AudioEngine:
 
 
 class JobRunner:
+    """
+    This class orchestrates the execution of a job that involves getting assets, validating them, 
+    running the job, and cleaning up afterwards.
+
+    Attributes:
+    ------------
+    job_id : str
+        Unique identifier for the job.
+    channel_index : int
+        Index of the channel being processed.
+    random_id : str
+        Unique random identifier.
+    job_params : object
+        Instance of JobConfig class containing the job parameters.
+    logger : object
+        Logger instance for logging status and error messages.
+
+    Methods:
+    ------------
+    get_assets():
+        Retrieves the necessary assets for the job.
+    validate():
+        Validates the assets and returns validated audio sequence.
+    result(result: bool):
+        Handles the job result. Returns cloud path if job is successful.
+    clean_up():
+        Deletes local assets after job completion.
+    execute():
+        Executes the job workflow.
+    """
     def __init__(self, job_id, channel_index, random_id):
         self.job_id = job_id
         self.channel_index = channel_index
