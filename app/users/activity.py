@@ -5,6 +5,12 @@ from pydantic import Field, BaseSettings
 from typing import List
 
 class DatabaseSettings(BaseSettings):
+    """
+    The DatabaseSettings class encapsulates the settings for the PostgreSQL database. 
+    These settings include the host, database name, user, password, and port.
+    The values are fetched from the environment variables.
+    """
+
     host: str = Field(..., env="DB_HOST")
     dbname: str = Field(..., env="DB_NAME")
     user: str = Field(..., env="DB_USER")
@@ -13,7 +19,17 @@ class DatabaseSettings(BaseSettings):
   
 
 class UserActivityDB:
+    """
+    The UserActivityDB class encapsulates methods for interacting with a user's activity records in the database.
+    These interactions involve both querying and updating information in various tables.
+    """
     def db_conn(self):
+        """
+        Establish a connection to the PostgreSQL database using the settings defined in the DatabaseSettings class.
+
+        Returns:
+        connection: A psycopg2 database connection
+        """
         db_settings = DatabaseSettings()
 
         connection = psycopg2.connect(
@@ -26,6 +42,15 @@ class UserActivityDB:
         return connection
     
     def get_favourite_sessions(self, current_user_id):
+        """
+        Fetch the favourite session records for the current user.
+
+        Parameters:
+        current_user_id (str): The unique identifier of the current user.
+
+        Returns:
+        list: A list of session ids which are marked as favourite by the current user.
+        """
         # Fetch the favourite session records for the current user
         query = """
         SELECT session_id
@@ -41,6 +66,14 @@ class UserActivityDB:
         return [session_id for (session_id,) in favourite_sessions]
 
     def update_favourite_sessions(self, current_user_id, current_session_id):
+        """
+        Update the favourite session records for the current user.
+        If the current session is not marked as favourite, it is added to the favourite_sessions table.
+
+        Parameters:
+        current_user_id (str): The unique identifier of the current user.
+        current_session_id (str): The unique identifier of the current session.
+        """
         # Fetch the existing session record, if any
         query = """
         SELECT *
@@ -58,8 +91,14 @@ class UserActivityDB:
         if not check_session:
             self.insert_to_favourite_sessions(current_user_id, current_session_id)
 
-
     def insert_to_favourite_sessions(self, current_user_id, current_session_id):
+        """
+        Insert a new session record into the favourite_sessions table for the current user.
+
+        Parameters:
+        current_user_id (str): The unique identifier of the current user.
+        current_session_id (str): The unique identifier of the current session.
+        """
 
         print('updating db...')
         created_at = datetime.now()
@@ -75,6 +114,18 @@ class UserActivityDB:
         my_conn.close()
 
     def transform_file_names(self, file_names: List[str], folder: str, user_id: str):
+        """
+        Transform the list of file names into a DataFrame, filtering based on certain conditions, and adding 
+        additional columns.
+
+        Parameters:
+        file_names (List[str]): A list of file names.
+        folder (str): The folder where the files are stored.
+        user_id (str): The unique identifier of the current user.
+
+        Returns:
+        pd.DataFrame: A DataFrame with the transformed file names.
+        """
         # Create a DataFrame from the list of file names
         file_names_df = pd.DataFrame(file_names, columns=["paths"])
 
@@ -97,6 +148,14 @@ class UserActivityDB:
         return result_df
 
     def get_favourite_stems(self, current_user_id: str, current_session_id: str):
+        """
+        Parameters:
+        current_user_id (str): The unique identifier of the current user.
+        current_session_id (str): The unique identifier of the current session.
+
+        Returns:
+        list: A list of paths for favourite stems associated with the user and session.
+        """
         my_conn = self.db_conn()
 
         with my_conn.cursor() as cursor:
@@ -120,6 +179,15 @@ class UserActivityDB:
         return my_files
 
     def update_favourite_stems(self, updated_data, current_user_id, current_session_id):
+        """
+        Update the favourite stems for a given user and session in the favourite_stems table.
+        If the stem does not exist, it is inserted into the table. If it exists, the existing record is updated.
+
+        Parameters:
+        updated_data (DataFrame): DataFrame containing the updated stem data.
+        current_user_id (str): The unique identifier of the current user.
+        current_session_id (str): The unique identifier of the current session.
+        """
         my_conn = self.db_conn()
         with my_conn.cursor() as cursor:
             # Check if a record exists for the current user and session
@@ -164,6 +232,15 @@ class UserActivityDB:
         my_conn.close()
     
     def update_favourite_arrangements(self, updated_data, current_user_id, current_session_id):
+        """
+        Update the favourite arrangements for a given user and session in the favourite_arrangements table.
+        If the arrangement does not exist, it is inserted into the table. If it exists, the existing record is updated.
+
+        Parameters:
+        updated_data (DataFrame): DataFrame containing the updated arrangement data.
+        current_user_id (str): The unique identifier of the current user.
+        current_session_id (str): The unique identifier of the current session.
+        """
         my_conn = self.db_conn()
         with my_conn.cursor() as cursor:
             # Check if a record exists for the current user and session
@@ -205,9 +282,16 @@ class UserActivityDB:
                         cursor.executemany(insert_query, data_to_insert)
                         my_conn.commit()
         my_conn.close()
-
-    
+  
     def update_playlist_likes(self, current_user_id, session_id_):
+        """
+        Update the likes of a playlist for a given user and session in the playlist_likes table.
+        The method adds a new like to the playlist.
+
+        Parameters:
+        current_user_id (str): The unique identifier of the current user.
+        session_id_ (str): The unique identifier of the current session.
+        """
         my_conn = self.db_conn()
         created_at_ = datetime.now()
         new_likes = pd.DataFrame({
@@ -235,6 +319,14 @@ class UserActivityDB:
         my_conn.close()
     
     def update_playlist_plays(self, current_user_id, session_id_):
+        """
+        Update the plays of a playlist for a given user and session in the playlist_plays table.
+        The method adds a new play to the playlist.
+
+        Parameters:
+        current_user_id (str): The unique identifier of the current user.
+        session_id_ (str): The unique identifier of the current session.
+        """
         my_conn = self.db_conn()
         created_at_ = datetime.now()
         new_plays = pd.DataFrame({
@@ -262,6 +354,15 @@ class UserActivityDB:
         my_conn.close()
 
     def get_playlist_stats(self, current_user_id):
+        """
+        Fetch the playlist statistics (likes, plays, and arrangements) for the current user.
+
+        Parameters:
+        current_user_id (str): The unique identifier of the current user.
+
+        Returns:
+        str: A JSON string containing the playlist statistics.
+        """
         my_conn = self.db_conn()
         with my_conn.cursor() as cursor:
             # Get likes
