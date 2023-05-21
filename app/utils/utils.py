@@ -9,6 +9,14 @@ import itertools
 
 
 class JobTypeValidator(BaseModel):
+    """
+    A Pydantic model for validating job types.
+
+    Attributes:
+        job_type: A string representing the job type. It must be one of the
+            following: "job_id_path", "processed_job_path", "asset_path",
+            "mixdown_job_path", "mixdown_job_path_master", or "mixdown_job_path_pkl".
+    """
     job_type: Literal[
         "job_id_path",
         "processed_job_path",
@@ -45,13 +53,38 @@ class JobConfigValidator(BaseModel):
 
 
 class JobConfig:
+    """
+    A class used to manage and resolve job configurations.
+
+    Attributes:
+        job_id: A string representing the job's ID.
+        channel_index: An integer representing the channel index.
+        random_id: A string representing a random ID.
+    """
     def __init__(self, job_id: str, channel_index: int, random_id: str):
+        """
+        The constructor for JobConfig class.
+
+        Parameters:
+            job_id (str): The job's ID.
+            channel_index (int): The channel index.
+            random_id (str): A random ID.
+        """
         self.job_id = job_id
         self.channel_index = channel_index
         self.random_id = random_id
     
     @staticmethod
     def has_initial_index(file_path):
+        """
+        Checks if a file at the given path has an initial index.
+
+        Parameters:
+            file_path (str): The file path to check.
+
+        Returns:
+            bool: True if the file has an initial index, False otherwise.
+        """
         try:
             with open(file_path, 'r') as file:
                 json_obj = json.load(file)
@@ -60,6 +93,12 @@ class JobConfig:
             return False
 
     def path_resolver(self):
+        """
+        Resolves various paths related to the job.
+
+        Returns:
+            dict: A dictionary containing resolved paths.
+        """
 
         # random_id = ''.join((random.choice('abcdxyzpqr') for i in range(8)))
 
@@ -123,6 +162,12 @@ class JobConfig:
         return paths_dict
 
     def __psuedo_json_to_dict(self):
+        """
+        Converts the job's pseudo JSON to a Python dictionary.
+
+        Returns:
+            dict: The job's data as a Python dictionary.
+        """
         paths = self.path_resolver()
         inital_index = self.has_initial_index(paths["local_path"])
         if(inital_index):
@@ -140,6 +185,12 @@ class JobConfig:
     
 
     def get_job_params(self):
+        """
+        Retrieves the job's parameters.
+
+        Returns:
+            dict: The job's parameters as a Python dictionary.
+        """
         job_id_dict = self.__psuedo_json_to_dict()
 
         _check_index = JobConfigValidator.parse_obj({"index_value": self.channel_index})
@@ -162,10 +213,28 @@ class JobConfig:
 
 
 class JobUtils:
+    """
+    A class providing utilities for job management.
+    """
     def __init__(self, job_id: str):
+        """
+        The constructor for JobUtils class.
+
+        Parameters:
+            job_id (str): The job's ID.
+        """
         self.job_id = job_id
 
     def sanitize_job_id(self):
+        """
+        Sanitizes the job's ID.
+
+        Parameters:
+            job_id (str): The job's ID.
+
+        Returns:
+            str: The sanitized job's ID.
+        """
         my_job_id = self.job_id
 
         sanitized_job_id = my_job_id.replace(".json", "").replace("job_ids/", "")
@@ -220,10 +289,25 @@ class JobUtils:
 
 
 class JobCleanUp:
+    """
+    A class providing cleanup utilities for jobs.
+    """
     def __init__(self, job_id: str):
+        """
+        The constructor for JobCleanUp class.
+
+        Parameters:
+            job_id (str): The job's ID.
+        """
         self.job_id = job_id
 
     def assets(self):
+        """
+        Cleans up assets by removing .mp3 files.
+
+        Returns:
+            List[bool]: A list of status indicating whether each file was successfully removed or not.
+        """
 
         assets_path = os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
@@ -245,6 +329,12 @@ class JobCleanUp:
         return status
 
     def assets_refactor(self):
+        """
+        Cleans up assets by removing .mp3 files. Refactored version.
+
+        Returns:
+            bool: True if all files were successfully removed, False otherwise.
+        """
         assets_path = os.path.abspath(os.path.join("assets", "sounds"))
         files = glob.glob(os.path.join(assets_path, "*.mp3"))
 
@@ -253,6 +343,12 @@ class JobCleanUp:
         return all(map(file_to_rem, files))
 
     def sanitize_job_id(self):
+        """
+        Sanitizes the job's ID.
+
+        Returns:
+            str: The sanitized job's ID.
+        """
         my_job_id = self.job_id
 
         sanitized_job_id = my_job_id.replace(".json", "").replace("job_ids/", "")
@@ -261,12 +357,28 @@ class JobCleanUp:
 
     @staticmethod
     def filter_list(my_list: List[str], my_string: str) -> List[str]:
+        """
+        Filters a list of strings based on a given pattern.
+
+        Parameters:
+            my_list (List[str]): The list of strings to filter.
+            my_string (str): The pattern to search for.
+
+        Returns:
+            List[str]: The filtered list of strings.
+        """
         pattern = re.compile(my_string)
         filtered_list = [item for item in my_list if pattern.search(item)]
 
         return filtered_list
 
     def temp(self):
+        """
+        Cleans up temporary files by removing .pkl, .mp3, and .json files.
+
+        Returns:
+            List[bool]: A list of status indicating whether each file was successfully removed or not.
+        """
         # sanitie job id
         my_job_id = self.sanitize_job_id()
 
@@ -299,6 +411,12 @@ class JobCleanUp:
         return status
 
     def tempre_factor(self):
+        """
+        Cleans up temporary files by removing .pkl, .mp3, and .json files. Refactored version.
+
+        Returns:
+            bool: True if all files were successfully removed, False otherwise.
+        """
         temp_path = os.path.abspath(os.path.join("temp"))
 
         ext_types = ["*.pkl", "*.mp3", "*.json"]
@@ -311,6 +429,16 @@ class JobCleanUp:
         return all(map(file_to_rem, files))
 
 def purge_all(my_paths: List[str], my_patterns: List[str]) -> bool:
+    """
+    Purges all files matching the given patterns in the specified paths.
+
+    Args:
+        my_paths (List[str]): List of directory paths to search in.
+        my_patterns (List[str]): List of file patterns to match.
+
+    Returns:
+        bool: True if all files were successfully removed, False otherwise.
+    """
     # remove all files in temp
     temp_path = os.path.abspath(os.path.join(*my_paths))
     ext_types = my_patterns
