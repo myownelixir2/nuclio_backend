@@ -264,19 +264,25 @@ class SequenceEngine:
         :return: The validated sequence.
         """
         one_bar = 60 / bpm * 4
-        original_sample_len = round(44100 * one_bar)
+        original_sample_len = round(44100 * one_bar / 1)
 
-        new_sequence_unpacked = [
-            item for sublist in new_sequence for item in sublist
-        ] if isinstance(new_sequence[0], list) else new_sequence
+        try:
+            new_sequence_unpacked = [
+                item for sublist in new_sequence for item in sublist
+            ]
+        except TypeError:
+            new_sequence_unpacked = new_sequence
 
         new_sequence_len = len(new_sequence_unpacked)
 
-        if new_sequence_len < original_sample_len:
+        if new_sequence_len == original_sample_len:
+            validated_sequence = new_sequence_unpacked[:original_sample_len]
+        elif new_sequence_len < original_sample_len:
             empty_array = np.zeros(original_sample_len - new_sequence_len)
+
             validated_sequence = np.append(new_sequence_unpacked, empty_array)
         else:
-            validated_sequence = new_sequence_unpacked[:original_sample_len]
+            validated_sequence = new_sequence_unpacked
         return validated_sequence
 
     @staticmethod

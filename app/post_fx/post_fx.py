@@ -148,6 +148,7 @@ class VolEngine:
             bpm, self.pre_processed_sequence
         )
 
+     
         vol = self.mix_params.vol[channel_index] / 100
         if vol == 0:
             my_sequence_vol_applied = np.zeros(len(my_sequence_unpacked))
