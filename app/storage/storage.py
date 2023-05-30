@@ -18,6 +18,39 @@ from app.utils.utils import JobTypeValidator
 
 
 
+class StorageBase:
+    def __init__(self, bucket= None):
+        self.bucket = bucket
+        self.resource = self.resource_init()  # Here resource_init is called
+        self.client = self.client_init()  # Here client_init is called
+        self.logger = logging.getLogger(__name__)  # initialize logger
+
+    def resource_init(self):
+        try:
+            self.resource = boto3.resource(
+                "s3",
+                endpoint_url=StorageCreds().endpoint_url,
+                aws_access_key_id=StorageCreds().access_key_id,
+                aws_secret_access_key=StorageCreds().secret_access_key,
+            )
+            return self.resource
+        except (BotoCoreError, ClientError) as e:
+            self.logger.error(f"Error initializing S3 resource: {e}")
+            raise e
+
+    def client_init(self):
+        try:
+            self.client = boto3.client(
+                "s3",
+                endpoint_url=StorageCreds().endpoint_url,
+                aws_access_key_id=StorageCreds().access_key_id,
+                aws_secret_access_key=StorageCreds().secret_access_key,
+            )
+            return self.client
+        except (BotoCoreError, ClientError) as e:
+            self.logger.error(f"Error initializing S3 client: {e}")
+            raise e
+
 class StorageCreds(BaseSettings):
     """
     A class used to manage and validate storage credentials.
@@ -60,7 +93,7 @@ class StorageCreds(BaseSettings):
         return v
 
 
-class StorageEngine:
+class StorageEngine(StorageBase):
     """
     Class to manage storage operations with an S3-compatible storage system.
 
@@ -74,25 +107,10 @@ class StorageEngine:
         Boto3 S3 resource object.
     """
 
-    def __init__(self, job_config, asset_type):
+    def __init__(self, job_config, asset_type, bucket=None):
+        super().__init__(bucket)  # Call the parent class (StorageBase) constructor
         self.job_config = job_config
         self.asset_type = asset_type
-        self.client = self.client_init()
-        self.logger = logging.getLogger(__name__)
-
-    def client_init(self):
-        """Initialize S3 client using storage credentials."""
-        try:
-            client = boto3.resource(
-                "s3",
-                endpoint_url=StorageCreds().endpoint_url,
-                aws_access_key_id=StorageCreds().access_key_id,
-                aws_secret_access_key=StorageCreds().secret_access_key,
-            )
-            return client
-        except (BotoCoreError, ClientError) as e:
-            self.logger.error(f"Error initializing S3 client: {e}")
-            raise e
 
     def __resolve_type(self):
         job_paths = self.job_config.path_resolver()
@@ -178,7 +196,7 @@ class StorageEngine:
             raise e
 
         
-class StoreEngineMultiFile:
+class StoreEngineMultiFile(StorageBase):
     """
     This class handles the upload of multiple files to S3 storage.
 
@@ -198,7 +216,7 @@ class StoreEngineMultiFile:
     upload_list_of_objects(files: List[str], bucket_path: str):
         Uploads a list of files to a specified bucket path on S3.
     """
-    def __init__(self, job_id):
+    def __init__(self, job_id, bucket=None):
         """
         Initialize the S3 client.
 
@@ -212,23 +230,10 @@ class StoreEngineMultiFile:
         Exception
             If any error occurs during the client initialization.
         """
+        super().__init__(bucket)  # Call the parent class (StorageBase) constructor
         self.job_id: str = job_id
         self.logger = logging.getLogger(__name__)
-        self.client = self.client_init()
 
-    def client_init(self):
-        """Initialize the S3 client."""
-        try:
-            client = boto3.resource(
-                "s3",
-                endpoint_url=StorageCreds().endpoint_url,
-                aws_access_key_id=StorageCreds().access_key_id,
-                aws_secret_access_key=StorageCreds().secret_access_key,
-            )
-            return client
-        except Exception as e:
-            self.logger.error(f"Error initializing S3 client: {e}")
-            raise e
 
     def upload_list_of_objects(self, files: List[str], bucket_path: str) -> bool:
         """
@@ -271,38 +276,7 @@ class StoreEngineMultiFile:
             raise e
 
 
-class StorageBase:
-    def __init__(self, bucket):
-        self.bucket = bucket
-        self.resource = self.resource_init()  # Here resource_init is called
-        self.client = self.client_init()  # Here client_init is called
-        self.logger = logging.getLogger(__name__)  # initialize logger
 
-    def resource_init(self):
-        try:
-            self.resource = boto3.resource(
-                "s3",
-                endpoint_url=StorageCreds().endpoint_url,
-                aws_access_key_id=StorageCreds().access_key_id,
-                aws_secret_access_key=StorageCreds().secret_access_key,
-            )
-            return self.resource
-        except Exception as e:
-            print(e)
-            return False
-
-    def client_init(self):
-        try:
-            self.client = boto3.client(
-                "s3",
-                endpoint_url=StorageCreds().endpoint_url,
-                aws_access_key_id=StorageCreds().access_key_id,
-                aws_secret_access_key=StorageCreds().secret_access_key,
-            )
-            return self.client
-        except Exception as e:
-            print(e)
-            return False
 
 def handle_client_error(func):
     def wrapper(*args, **kwargs):
