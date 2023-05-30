@@ -525,6 +525,7 @@ class JobRunner:
 
     def clean_up(self):
         try:
+            
             StorageEngine(self.job_params, "asset_path").delete_local_object()
         except Exception as e:
             self.logger.error(f"Error cleaning up: {e}")
@@ -545,3 +546,4 @@ class JobRunner:
         except Exception as e:
             self.logger.error(f"Error executing job: {e}")
             return False
+

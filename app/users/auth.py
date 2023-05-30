@@ -1,6 +1,5 @@
 from fastapi import HTTPException, Depends, status
-import firebase_admin
-from firebase_admin import auth, credentials, initialize_app
+from firebase_admin import auth, credentials, initialize_app, exceptions
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel, BaseSettings, Field
 
@@ -70,7 +69,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         decoded_token = auth.verify_id_token(token)
         uid = decoded_token["uid"]
-    except (ValueError, KeyError, TypeError, firebase_admin.auth.AuthError):
+    except (ValueError, KeyError, TypeError, exceptions.FirebaseError):
         raise credentials_exception
 
     user = auth.get_user(uid)

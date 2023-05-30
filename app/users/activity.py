@@ -4,6 +4,9 @@ from datetime import datetime
 from pydantic import Field, BaseSettings
 from typing import List
 
+
+
+
 class DatabaseSettings(BaseSettings):
     """
     The DatabaseSettings class encapsulates the settings for the PostgreSQL database. 
@@ -16,7 +19,8 @@ class DatabaseSettings(BaseSettings):
     user: str = Field(..., env="DB_USER")
     password: str = Field(..., env="DB_PASSWORD")
     port: str = Field(..., env="DB_PORT")
-  
+   
+
 
 class UserActivityDB:
     """
@@ -140,9 +144,16 @@ class UserActivityDB:
         file_names_df["user_id"] = user_id
 
         # Split the 'paths' column into separate columns
-        file_names_df[["folder", "session_id", "file"]] = file_names_df["paths"].str.split('/', expand=True)
-
-        # Select the desired columns from the DataFrame
+        #file_names_df[["folder", "session_id", "file"]] = file_names_df["paths"].str.split('/', expand=True)
+        split_df = file_names_df["paths"].str.split('/', expand=True)
+        if split_df.shape[1] == 3:
+            file_names_df[["folder", "session_id", "file"]] = split_df
+        else:
+       
+            file_names_df["folder"] = None
+            file_names_df["session_id"] = None
+            file_names_df["file"] = None
+     
         result_df = file_names_df[["paths", "session_id", "user_id"]]
 
         return result_df
@@ -408,4 +419,45 @@ class UserActivityDB:
         #            "paths": merged_df['paths']}
         return json_res
 
+
+def transform_file_names(file_names: List[str], folder: str, user_id: str):
+    """
+    Transform the list of file names into a DataFrame, filtering based on certain conditions, and adding 
+    additional columns.
+
+    Parameters:
+    file_names (List[str]): A list of file names.
+    folder (str): The folder where the files are stored.
+    user_id (str): The unique identifier of the current user.
+
+    Returns:
+    pd.DataFrame: A DataFrame with the transformed file names.
+    """
+    # Create a DataFrame from the list of file names
+    file_names_df = pd.DataFrame(file_names, columns=["paths"])
+
+    # Filter the DataFrame based on the specified conditions
+    file_names_df = file_names_df[file_names_df["paths"].str.contains(f"{folder}/20")]
+    file_names_df = file_names_df[file_names_df["paths"].str.contains(r'\.(wav|mp3)')]
+
+    # Add a new column 'bucket'
+    file_names_df["bucket"] = "favs-dump"
+
+    # Add a new column 'user_id'
+    file_names_df["user_id"] = user_id
+
+    # Split the 'paths' column into separate columns
+    #file_names_df[["folder", "session_id", "file"]] = file_names_df["paths"].str.split('/', expand=True)
+    split_df = file_names_df["paths"].str.split('/', expand=True)
+    if split_df.shape[1] == 3:
+        file_names_df[["folder", "session_id", "file"]] = split_df
+    else:
+    
+        file_names_df["folder"] = None
+        file_names_df["session_id"] = None
+        file_names_df["file"] = None
+    
+    result_df = file_names_df[["paths", "session_id", "user_id"]]
+
+    return result_df
 
