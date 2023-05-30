@@ -346,103 +346,103 @@ class FxPedalBoardEngine:
         my_wav.save_to_wav()
 
 
-class FxEngine:
-    """
-    Class for applying audio FX using ffmpeg.
+# class FxEngine:
+#     """
+#     Class for applying audio FX using ffmpeg.
 
-    Attributes:
-        mix_params: The mix parameters.
-        job_params: The job parameters.
-        pre_processed_sequence: The pre-processed audio sequence.
-    """
-    def __init__(self, mix_params, job_params, my_sequence):
-        self.mix_params = mix_params
-        self.job_params = job_params
-        self.pre_processed_sequence = my_sequence
+#     Attributes:
+#         mix_params: The mix parameters.
+#         job_params: The job parameters.
+#         pre_processed_sequence: The pre-processed audio sequence.
+#     """
+#     def __init__(self, mix_params, job_params, my_sequence):
+#         self.mix_params = mix_params
+#         self.job_params = job_params
+#         self.pre_processed_sequence = my_sequence
 
-    def __convert_sequence_array_to_audio(self):
-        channel_index = int(self.job_params.channel_index)
-        fx_input = self.mix_params.fx_input[channel_index]
+#     def __convert_sequence_array_to_audio(self):
+#         channel_index = int(self.job_params.channel_index)
+#         fx_input = self.mix_params.fx_input[channel_index]
 
-        if fx_input == "None":
-            output_file = "local_path_mixdown_mp3"
-        else:
-            output_file = "local_path_pre_mixdown_mp3"
+#         if fx_input == "None":
+#             output_file = "local_path_mixdown_mp3"
+#         else:
+#             output_file = "local_path_pre_mixdown_mp3"
 
-        try:
-            AudioEngine(
-                self.pre_processed_sequence,
-                self.job_params.path_resolver()[output_file],
-                normalized=True,
-            ).save_to_mp3()
-            return True
-        except Exception as e:
-            print(e)
-            return False
+#         try:
+#             AudioEngine(
+#                 self.pre_processed_sequence,
+#                 self.job_params.path_resolver()[output_file],
+#                 normalized=True,
+#             ).save_to_mp3()
+#             return True
+#         except Exception as e:
+#             print(e)
+#             return False
 
-    def __fx_dictionary(self):
+#     def __fx_dictionary(self):
 
-        input_file = self.job_params.path_resolver()["local_path_pre_mixdown_mp3"]
-        output_file = self.job_params.path_resolver()["local_path_mixdown_mp3"]
+#         input_file = self.job_params.path_resolver()["local_path_pre_mixdown_mp3"]
+#         output_file = self.job_params.path_resolver()["local_path_mixdown_mp3"]
 
-        fx_dict = {
-            "reverb": f"ffmpeg -i {input_file} -i sox_utils/stalbans_a_binaural.wav -filter_complex '[0] [1] afir=dry=10:wet=10 [reverb]; [0] [reverb] amix=inputs=2:weights=10 5' {output_file}",
-            "chorus": f"ffmpeg -i {input_file} -filter_complex 'chorus=0.5:0.9:50|60|70:0.3|0.22|0.3:0.25|0.4|0.3:2|2.3|1.3' {output_file}",
-            "crusher": f"ffmpeg -i {input_file} -filter_complex 'acrusher=level_in=4:level_out=4:bits=8:mode=log:aa=1:mix=0.25' {output_file}",
-            "echo_indoor": f"ffmpeg -i {input_file} -filter_complex 'aecho=0.8:0.9:40|50|70:0.4|0.3|0.2' {output_file}",
-            "echo_outdoor": f"ffmpeg -i {input_file} -filter_complex 'aecho=0.8:0.9:1000|1500|2000:0.4|0.3|0.2' {output_file}",
-            "robot_effect": f"ffmpeg -i {input_file} -filter_complex 'afftfilt=real='hypot(re,im)*sin(0)':imag='hypot(re,im)*cos(0)':win_size=512:overlap=0.75' {output_file}",
-        }
+#         fx_dict = {
+#             "reverb": f"ffmpeg -i {input_file} -i sox_utils/stalbans_a_binaural.wav -filter_complex '[0] [1] afir=dry=10:wet=10 [reverb]; [0] [reverb] amix=inputs=2:weights=10 5' {output_file}",
+#             "chorus": f"ffmpeg -i {input_file} -filter_complex 'chorus=0.5:0.9:50|60|70:0.3|0.22|0.3:0.25|0.4|0.3:2|2.3|1.3' {output_file}",
+#             "crusher": f"ffmpeg -i {input_file} -filter_complex 'acrusher=level_in=4:level_out=4:bits=8:mode=log:aa=1:mix=0.25' {output_file}",
+#             "echo_indoor": f"ffmpeg -i {input_file} -filter_complex 'aecho=0.8:0.9:40|50|70:0.4|0.3|0.2' {output_file}",
+#             "echo_outdoor": f"ffmpeg -i {input_file} -filter_complex 'aecho=0.8:0.9:1000|1500|2000:0.4|0.3|0.2' {output_file}",
+#             "robot_effect": f"ffmpeg -i {input_file} -filter_complex 'afftfilt=real='hypot(re,im)*sin(0)':imag='hypot(re,im)*cos(0)':win_size=512:overlap=0.75' {output_file}",
+#         }
 
-        return fx_dict
+#         return fx_dict
 
-    def apply_fx(self):
-        """
-        Applies the audio FX to the pre-processed sequence.
+#     def apply_fx(self):
+#         """
+#         Applies the audio FX to the pre-processed sequence.
 
-        Returns:
-            bool: True if FX was successfully applied, False otherwise.
-        """
+#         Returns:
+#             bool: True if FX was successfully applied, False otherwise.
+#         """
 
-        channel_index = int(self.job_params.channel_index)
-        fx_input = self.mix_params.fx_input[channel_index]
+#         channel_index = int(self.job_params.channel_index)
+#         fx_input = self.mix_params.fx_input[channel_index]
 
-        self.__convert_sequence_array_to_audio()
+#         self.__convert_sequence_array_to_audio()
 
-        fx_dict = self.__fx_dictionary()
+#         fx_dict = self.__fx_dictionary()
 
-        if fx_input == "None":
-            print("No FX applied")
-            return True
-        else:
-            output_file = self.job_params.path_resolver()["local_path_mixdown_mp3"]
-            # REMOVE IF FILE EXISTS
-            if os.path.exists(output_file):
-                os.remove(output_file)
-            try:
+#         if fx_input == "None":
+#             print("No FX applied")
+#             return True
+#         else:
+#             output_file = self.job_params.path_resolver()["local_path_mixdown_mp3"]
+#             # REMOVE IF FILE EXISTS
+#             if os.path.exists(output_file):
+#                 os.remove(output_file)
+#             try:
 
-                fx_sox_cmd = list(fx_dict.values())[int(fx_input)]
-                returned_value = os.system(fx_sox_cmd)  # returns the exit code in unix
-                print("returned value:", returned_value)
+#                 fx_sox_cmd = list(fx_dict.values())[int(fx_input)]
+#                 returned_value = os.system(fx_sox_cmd)  # returns the exit code in unix
+#                 print("returned value:", returned_value)
 
-                time_to_wait = 2
-                time_counter = 0
+#                 time_to_wait = 2
+#                 time_counter = 0
 
-                while not os.path.exists(output_file):
-                    time.sleep(0.1)
-                    time_counter += 0.1
-                    if time_counter > time_to_wait:
-                        break
+#                 while not os.path.exists(output_file):
+#                     time.sleep(0.1)
+#                     time_counter += 0.1
+#                     if time_counter > time_to_wait:
+#                         break
 
-                if os.path.exists(output_file):
-                    print("FX applied")
-                    return True
+#                 if os.path.exists(output_file):
+#                     print("FX applied")
+#                     return True
 
-                else:
-                    return False
-            except Exception as e:
-                print(e)
-                return False
+#                 else:
+#                     return False
+#             except Exception as e:
+#                 print(e)
+#                 return False
 
 
 
