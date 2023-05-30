@@ -452,6 +452,3 @@ def purge_all(my_paths: List[str], my_patterns: List[str]) -> bool:
 
 
 
-
-
-
