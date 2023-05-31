@@ -92,7 +92,7 @@ def add_to_favourites(job_id: str,
     if not matching_files:
         raise HTTPException(status_code=404, detail="Did not find any items with provided job_id")
 
-    print(matching_files)
+    #print(matching_files)
     try:
         multi_file_upload_job = StoreEngineMultiFile(job_id)
 

@@ -19,10 +19,10 @@ from app.utils.utils import JobTypeValidator
 
 
 class StorageBase:
-    def __init__(self, bucket= None):
+    def __init__(self, bucket= None, client=None, resource=None):
         self.bucket = bucket
-        self.resource = self.resource_init()  # Here resource_init is called
-        self.client = self.client_init()  # Here client_init is called
+        self.client = client if client else self.client_init()  # Use provided client, if none provided call client_init
+        self.resource = resource if resource else self.resource_init()  # Use provided resource, if none provided call resource_init
         self.logger = logging.getLogger(__name__)  # initialize logger
 
     def resource_init(self):
@@ -103,23 +103,23 @@ class StorageEngine(StorageBase):
         Configuration settings for the job.
     asset_type : str
         Type of the asset.
-    client : object
-        Boto3 S3 resource object.
     """
 
-    def __init__(self, job_config, asset_type, bucket=None):
-        super().__init__(bucket)  # Call the parent class (StorageBase) constructor
+    def __init__(self, job_config, asset_type, bucket=None, client=None, resource=None):
+        super().__init__(bucket, client, resource)  # Call the parent class (StorageBase) constructor
         self.job_config = job_config
         self.asset_type = asset_type
+        self.client = self.resource
 
     def __resolve_type(self):
         job_paths = self.job_config.path_resolver()
-
+     
         _check = JobTypeValidator.parse_obj({"job_type": self.asset_type})
 
         if _check.job_type == "job_id_path":
             d_filter = ["local_path", "cloud_path"]
             d_paths = dict(((key, job_paths[key]) for key in d_filter))
+
             return d_paths
         elif _check.job_type == "processed_job_path":
             d_paths = {
@@ -157,7 +157,10 @@ class StorageEngine(StorageBase):
         """Download file from S3 to local."""
         try:
             bucket = self.client.Bucket(bucket_name)
+            for obj in bucket.objects.all():
+                print(obj.key, obj.last_modified)
             _type = self.__resolve_type()
+
             bucket.download_file(_type["cloud_path"], _type["local_path"])
             return True
         except (BotoCoreError, ClientError) as e:
@@ -206,17 +209,13 @@ class StoreEngineMultiFile(StorageBase):
         Unique identifier for the job.
     logger : object
         Logger instance for logging status and error messages.
-    client : object
-        S3 client instance.
 
     Methods:
     --------
-    client_init():
-        Initializes and returns the S3 client.
     upload_list_of_objects(files: List[str], bucket_path: str):
         Uploads a list of files to a specified bucket path on S3.
     """
-    def __init__(self, job_id, bucket=None):
+    def __init__(self, job_id, bucket="favs-dump", client=None, resource=None):
         """
         Initialize the S3 client.
 
@@ -230,7 +229,7 @@ class StoreEngineMultiFile(StorageBase):
         Exception
             If any error occurs during the client initialization.
         """
-        super().__init__(bucket)  # Call the parent class (StorageBase) constructor
+        super().__init__(bucket, client, resource)  # Call the parent class (StorageBase) constructor
         self.job_id: str = job_id
         self.logger = logging.getLogger(__name__)
 
@@ -263,10 +262,15 @@ class StoreEngineMultiFile(StorageBase):
         cloud_paths = [os.path.join(bucket_path, file) for file in sanitized_files]
         
         try:
-            bucket = self.client.Bucket("favs-dump")
+            bucket_local = self.resource.Bucket(self.bucket)
+            print(bucket_local)
+            buckets = [bucket.name for bucket in self.resource.buckets.all()]
+            print(buckets)      
+          
             for file, cloud_path in zip(files, cloud_paths):
+   
                 try:
-                    bucket.upload_file(file, cloud_path)
+                    bucket_local.upload_file(Filename=file, Key=cloud_path)
                 except Exception as e:
                     self.logger.error(f"Error uploading file {file} to S3: {e}")
                     raise e
@@ -309,46 +313,50 @@ class StorageEngineDownloader(StorageBase):
         get_presigned_url(file_name, expires_in): Generate a presigned URL for a file in the bucket.
         upload_and_get_presigned_url(zip_name, in_memory_zip, expires_in): Upload a file to the bucket and generate a presigned URL for it.
     """
-    def __init__(self, bucket):
-        super().__init__(bucket)
+    def __init__(self, bucket, client=None, resource=None, ):
+        super().__init__(bucket, client, resource)
 
     @handle_client_error
     def copy_objects(self, source_key: str, destination_key: str):
-        client = self.client_init()
-        client.copy_object(Bucket=self.bucket,
+        client_local = self.client
+        client_local.copy_object(Bucket=self.bucket,
                            Key=destination_key, CopySource=f"{self.bucket}/{source_key}")
         return True
 
     def download_in_memory_objects(self, key: str) -> io.BytesIO:
-        client = self.resource_init()
-        obj = client.get_object(Bucket=self.bucket, Key=key)
+        client_local = self.client
+        obj = client_local.get_object(Bucket=self.bucket, Key=key)
         file_data = io.BytesIO(obj["Body"].read())
         return file_data
 
     def create_arrangement_file(self, my_files: List[str], format="wav"):
-        client = self.client_init()
+        client_local = self.client
         concatenated_audio = pydub.AudioSegment.empty()
         for obj in my_files:
-            file = client.get_object(Bucket=self.bucket, Key=obj)
+            file = client_local.get_object(Bucket=self.bucket, Key=obj)
             file_data = file["Body"].read()
             file_like_object = io.BytesIO(file_data)
             audio_data = pydub.AudioSegment.from_file(file_like_object, format=format)
+
             concatenated_audio += audio_data
 
         in_memory_arrangement = io.BytesIO()
+ 
         concatenated_audio.export(in_memory_arrangement, format="wav")
         in_memory_arrangement.seek(0)
+
         return in_memory_arrangement
 
     @handle_client_error
     def upload_in_memory_object(self, output_file: str, in_memory_object: io.BytesIO):
-        client = self.client_init()
-        client.upload_fileobj(in_memory_object, self.bucket, output_file)
+        client_local = self.client
+        client_local.upload_fileobj(in_memory_object, self.bucket, output_file)
         return output_file
 
     def filter_objects(self, prefix_):
-        resource = self.resource_init()
-        my_bucket = resource.Bucket(self.bucket)
+        resource_local = self.resource
+        print(resource_local)
+        my_bucket = resource_local.Bucket(self.bucket)
         files_list = []
         for f in my_bucket.objects.filter(Prefix=prefix_):
             files_list.append(f.key)
@@ -365,19 +373,19 @@ class StorageEngineDownloader(StorageBase):
         return [file for file in file_list if file.endswith(suffix) and any(id_str in file for id_str in mixdown_ids)]
 
     def create_zip_file(self, my_files):
-        client = self.client_init()
+        client_local = self.client
         in_memory_zip = io.BytesIO()
         with zipfile.ZipFile(in_memory_zip, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
             for obj in my_files:
-                file = client.get_object(Bucket=self.bucket, Key=obj)
+                file = client_local.get_object(Bucket=self.bucket, Key=obj)
                 archive.writestr(obj, file["Body"].read())
         in_memory_zip.seek(0)
         return in_memory_zip
 
     @handle_client_error
     def get_presigned_url(self, file_name, expires_in=15):
-        client = self.client_init()
-        response = client.generate_presigned_url(
+        client_local = self.client
+        response = client_local.generate_presigned_url(
             "get_object",
             Params={"Bucket": self.bucket, "Key": file_name},
             ExpiresIn=expires_in,
@@ -386,9 +394,9 @@ class StorageEngineDownloader(StorageBase):
 
     @handle_client_error
     def upload_and_get_presigned_url(self, zip_name, in_memory_zip, expires_in=300):
-        client = self.client_init()
-        client.upload_fileobj(in_memory_zip, self.bucket, zip_name)
-        response = client.generate_presigned_url(
+        client_local = self.client
+        client_local.upload_fileobj(in_memory_zip, self.bucket, zip_name)
+        response = client_local.generate_presigned_url(
             "get_object",
             Params={"Bucket": self.bucket, "Key": zip_name},
             ExpiresIn=expires_in,
@@ -406,9 +414,9 @@ class SnapshotManager(StorageBase):
     """
     This class represents a manager for handling snapshots in Amazon S3 storage.
     """
-    def __init__(self, bucket_name):
-        super().__init__(bucket_name)
-        self.bucket_obj = self.resource.Bucket(self.bucket)
+    def __init__(self, bucket, client=None, resource=None):
+        super().__init__(bucket, client, resource)
+        #self.bucket_obj = self.resource.Bucket(self.bucket)
         self.snapshot_df = None
         self.snapshot_files_df = None
         
@@ -418,15 +426,16 @@ class SnapshotManager(StorageBase):
         The snapshot is a pandas DataFrame consisting of the paths of all the files in the bucket.
         """
         try:
-            files_list = [f.key for f in self.bucket_obj.objects.all()]
+            local_resource = self.resource.Bucket(self.bucket)
+            
+            files_list = [f.key for f in local_resource.objects.all()]
             self.snapshot_df = pd.DataFrame(files_list, columns=['paths'])
-
             # Save the snapshot_df to a CSV in memory
+            print(self.snapshot_df)
             csv_buffer = io.StringIO()
             self.snapshot_df.to_csv(csv_buffer, index=False)
 
             # Upload the CSV to S3
-    
             self.resource.Object(self.SNAPSHOTS_DUMP_BUCKET, self.SNAPSHOT_CSV).put(Body=csv_buffer.getvalue())
             return True
         except ClientError as e:
