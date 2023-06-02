@@ -18,6 +18,7 @@ from app.utils.utils import JobTypeValidator
 
 
 
+
 class StorageBase:
     def __init__(self, bucket= None, client=None, resource=None):
         self.bucket = bucket
@@ -157,10 +158,7 @@ class StorageEngine(StorageBase):
         """Download file from S3 to local."""
         try:
             bucket = self.client.Bucket(bucket_name)
-            for obj in bucket.objects.all():
-                print(obj.key, obj.last_modified)
             _type = self.__resolve_type()
-
             bucket.download_file(_type["cloud_path"], _type["local_path"])
             return True
         except (BotoCoreError, ClientError) as e:
@@ -263,10 +261,9 @@ class StoreEngineMultiFile(StorageBase):
         
         try:
             bucket_local = self.resource.Bucket(self.bucket)
-            print(bucket_local)
+           
             buckets = [bucket.name for bucket in self.resource.buckets.all()]
-            print(buckets)      
-          
+      
             for file, cloud_path in zip(files, cloud_paths):
    
                 try:
