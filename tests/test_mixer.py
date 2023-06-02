@@ -1,6 +1,6 @@
 import unittest
-from unittest.mock import patch, Mock, mock_open, MagicMock
-from app.mixer.mixer import MixEngine, MixRunner, JobConfig, StorageEngine, SequenceEngine
+from unittest.mock import patch, Mock, mock_open
+from app.mixer.mixer import MixEngine, MixRunner, JobConfig, StorageEngine
 import numpy as np
 
 class TestMixEngine(unittest.TestCase):

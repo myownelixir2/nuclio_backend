@@ -1,5 +1,4 @@
 import unittest
-import os
 from unittest.mock import patch, MagicMock
 from app.users.activity import UserActivityDB, DatabaseSettings
 import pandas as pd

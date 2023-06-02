@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from fastapi import HTTPException
-from firebase_admin import auth
 from app.users.auth import get_current_user, UserInDB, FirebaseSettings
 
 
