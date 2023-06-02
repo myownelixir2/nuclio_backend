@@ -19,7 +19,6 @@ class DatabaseSettings(BaseSettings):
     user: str = Field(..., env="DB_USER")
     password: str = Field(..., env="DB_PASSWORD")
     port: str = Field(..., env="DB_PORT")
-   
 
 
 class UserActivityDB:
