@@ -1,13 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
+from typing import Optional
+
 from app.users.auth import get_current_user, UserInDB
 from app.utils.utils import JobUtils, purge_all
-from app.storage.storage import (StoreEngineMultiFile, 
-                                 StorageEngineDownloader, 
-                                 SnapshotManager)
+from app.storage.storage import (
+    StoreEngineMultiFile,
+    StorageEngineDownloader,
+    SnapshotManager,
+)
+
 import logging
 from pathlib import Path
 import re
-
 
 logger = logging.getLogger(__name__)
 file_management = APIRouter()

@@ -2,14 +2,16 @@ import os
 import pickle
 import numpy as np
 import math
+import random
+from typing import Optional
+
 from pydantic import BaseModel, validator
 import pedalboard
-import random
+import logging
+
 from app.sequence_generator.generator import SequenceEngine, AudioEngine
 from app.storage.storage import StorageEngine
 from app.utils.utils import JobConfig
-import logging
-from typing import Optional
 
 class FxParamsModel(BaseModel):
     """
@@ -425,7 +427,6 @@ class FxRunner:
         except Exception as e:
             logging.error(f"Error during execution: {e}")
             raise
-
 
 
 

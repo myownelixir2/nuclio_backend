@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
+from typing import Optional
+
 from app.users.auth import get_current_user, UserInDB
 from app.utils.utils import JobConfig
 from app.storage.storage import StorageEngineDownloader
-import logging
 from pathlib import Path
 from app.sequence_generator.generator import JobRunner
 from app.post_fx.post_fx import FxParamsModel, FxRunner
 from app.mixer.mixer import MixRunner
-from typing import Optional
+
+import logging
 
 logger = logging.getLogger(__name__)
 audio_processing = APIRouter()
@@ -64,8 +66,7 @@ def apply_fx(
     try:
         logger.info("Starting to apply fx...")
         job_params = JobConfig(job_id, channel_index, random_id=random_id)
-        print('printing preset....')
-        print(preset)
+    
         fx = FxRunner(mix_params, job_id, channel_index, random_id)
         res = fx.execute()
 

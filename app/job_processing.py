@@ -1,7 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
+from typing import Optional
+
 from app.users.auth import get_current_user, UserInDB
 from app.utils.utils import JobConfig
-from app.storage.storage import (StorageEngine)
+from app.storage.storage import StorageEngine
+
 import logging
 import json
 from pathlib import Path

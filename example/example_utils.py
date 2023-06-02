@@ -1,8 +1,8 @@
 import requests
 import json
-from pydantic import BaseSettings
+import urllib.request
+from urllib.error import HTTPError
 from typing import List, Tuple
-from pydantic import BaseModel
 from datetime import datetime
 import random
 import pandas as pd
@@ -10,9 +10,9 @@ import string
 import time
 import concurrent.futures
 import re
-import urllib.request
-from urllib.error import HTTPError
 import os
+
+from pydantic import BaseSettings, BaseModel
 
 class FirebaseConfig(BaseSettings):
     firebase_api_key: str
