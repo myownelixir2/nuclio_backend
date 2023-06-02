@@ -15,8 +15,10 @@ from .user_activity import user_activity
 # logger config
 logger = logging.getLogger(__name__)
 
-os.environ["FIREBASE_CREDENTIAL_PATH"] = "/Users/wojciechbednarz/Desktop/python_projects/euclidean_rhythm_generator_mobile_python_fastapi/env/firebase_creds.json"
+
 firebase_settings = FirebaseSettings()
+
+
 
 app = FastAPI()
 
