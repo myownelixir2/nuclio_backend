@@ -14,7 +14,7 @@ job_processing = APIRouter()
 def create_job(job_id: str,
                payload: dict = Body(...),
                current_user: UserInDB = Depends(get_current_user)):
-    print(payload)
+
     try:
         job_params = JobConfig(job_id, 0, random_id="")
         local_path = job_params.path_resolver()['local_path']  
@@ -23,7 +23,8 @@ def create_job(job_id: str,
             json.dump(payload, fp)
         
         my_storage = StorageEngine(job_params, "job_id_path")
-        my_storage.client_init()
+        #my_storage.client_init()
+        print(my_storage)
         my_storage.upload_object()
         return True
     except Exception:
@@ -37,7 +38,7 @@ def job_id(job_id: str,
     logger.info("fetching job id...")
     job_params = JobConfig(job_id, 0, random_id="")
     my_storage = StorageEngine(job_params, "job_id_path")
-    my_storage.client_init()
+    #my_storage.client_init()
 
     local_path = job_params.path_resolver()["local_path"]
     job_id_file = Path(local_path)
