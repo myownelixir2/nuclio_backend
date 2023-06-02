@@ -64,3 +64,22 @@ The storage.py module is a robust and flexible solution for working with Amazon 
 4. **`SnapshotManager`**: This class provides functionalities for managing snapshots in S3. It enables creating a snapshot of files in a bucket, processing the snapshot data, and saving the processed data back to S3. It also generates pre-signed URLs for the snapshots.
 
 5. **`StoreEngineMultiFile`**: This class is designed for handling the upload of multiple files to S3 storage. It uses a unique identifier for each job and allows for the uploading of a list of files to a specified bucket path on S3.
+
+# User Activity Module
+The activity.py module, is main CRUD engine that allows for various interactions with Postgresql database. 
+
+1. **`DatabseSettings`**: The DatabaseSettings class encapsulates the settings for the PostgreSQL database. These settings include the host, database name, user, password, and port. The values are fetched from the environment variables.
+
+2. **`UserActivityDB`**: is a Python class that provides several methods for interacting with a PostgreSQL database. It manages data related to user activities such as favorite sessions, favorite stems, playlist likes, and plays. It maintains a connection to the database and performs various read and write operations based on user and session data.
+
+
+
+# Utils Module
+This module provides a collection of utility classes and functions for job management and cleanup.
+
+1. **`JobTypeValidator`**: a class for validating job types. It uses the Literal type hint to enforce a specific set of job types. The job_type_validator validator ensures that only valid job types are accepted.
+
+2. **`JobConfig`** : a class for managing and resolving job configurations. It provides methods for retrieving job parameters and handling file paths.
+
+3. **`purge_all`**: a function for purging all files matching the given patterns in the specified paths. It takes a list of directory paths and a list of file patterns as arguments.
+
