@@ -1,5 +1,12 @@
-# Euclidean Rhythm Generator
+# Neucl.io - Modern Euclidean Rhythm Generator
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
+![Firebase](https://img.shields.io/badge/firebase-%23039BE5.svg?style=for-the-badge&logo=firebase)
+
 This repository contains code for an API to generate rhythmic sequences using the Euclidean algorithm.
+
 
 ## Getting Started
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
@@ -30,32 +37,42 @@ You will need the following software installed:
 
 ```python3 -m unittest -v tests```
 
-5. Start the API
+5. Set all the relevant environment variables:
+```bash
+#FIREBASE
+export FIREBASE_CREDENTIAL_PATH={my_creds.json}
+
+# SQL DB
+export DB_HOST={host}
+export DB_NAME={db_name}
+export DB_USER={db_user}
+export DB_PASSWORD={db_pass}
+export DB_PORT={db_port}
+
+# S3 BUCKET  
+export STORAGE_URL={s3_url}
+export STORAGE_KEY={s3_key}
+export STORAGE_SECRET={s3_secret}
+```
+
+6. Start the API
 
 ```uvicorn run:app --reload --workers 4```
 
-The API will be running at http: //localhost :8000.
+The API will be running at http://localhost:8000.
 
 ## Usage
-The API exposes the following endpoints:
 
-- ```/get_sequence``` - Get a rhythmic sequence for a given channel index and job ID.
-You can send a POST request to /get_sequence with the following JSON:
+Head to ```/example``` folder on how to interact with API in stand alone mode. Follow steps in ```/example/example.ipynb```
 
-```
-{
-  "job_id": "job1",
-  "channel_index": 0,
-  "random_id": "random1" 
-}
-```
-The response will contain the sequence for the given parameters.
+
 
 ## Contributing
 Please feel free to contribute to this project by submitting issues or pull requests.
 
 ## License
 This project is licensed under the MIT License - see the LICENSE.md file for details.
+
 
 
 
