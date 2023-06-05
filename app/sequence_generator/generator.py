@@ -16,6 +16,7 @@ from app.utils.utils import JobConfig
 
 # SEQUENCE ENGINE ####
 
+
 class SequenceConfigRefactor:
     """This class is used to handle the configuration of audio sequences."""
 
@@ -245,7 +246,7 @@ class SequenceAudioFrameSlicer:
 
         for frame in individual_frames:
             sliced_frames.append(
-                self.audio[int(frame): int(frame) + int(unique_frame_length)]
+                self.audio[int(frame) : int(frame) + int(unique_frame_length)]
             )
         return sliced_frames
 
