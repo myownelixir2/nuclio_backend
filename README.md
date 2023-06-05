@@ -1,3 +1,64 @@
+# Euclidean Rhythm Generator
+This repository contains code for an API to generate rhythmic sequences using the Euclidean algorithm.
+
+## Getting Started
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+
+### Prerequisites
+You will need the following software installed:
+
+- Python 3.8+
+- Pip
+- Virtualenv (optional but recommended)
+
+### Installation
+1. Clone the repository
+
+```git clone https://github.com/myownelixir2/euclidean_rhythm_generator_mobile_python_fastapi.git```
+
+2. Create a virtual environment (optional)
+
+```virtualenv venv```
+
+```source venv/bin/activate  # On Windows, use `venv\Scripts\activate```
+
+3. Install the requirements
+
+```pip install -r requirements.txt```
+
+4. Run the tests
+
+```python3 -m unittest -v tests```
+
+5. Start the API
+
+```uvicorn run:app --reload --workers 4```
+
+The API will be running at http: //localhost :8000.
+
+## Usage
+The API exposes the following endpoints:
+
+- ```/get_sequence``` - Get a rhythmic sequence for a given channel index and job ID.
+You can send a POST request to /get_sequence with the following JSON:
+
+```
+{
+  "job_id": "job1",
+  "channel_index": 0,
+  "random_id": "random1" 
+}
+```
+The response will contain the sequence for the given parameters.
+
+## Contributing
+Please feel free to contribute to this project by submitting issues or pull requests.
+
+## License
+This project is licensed under the MIT License - see the LICENSE.md file for details.
+
+
+
 # FX module
 
 This is a comprehensive module developed for processing audio data in Python. It provides a series of classes designed to apply various sound effects to audio sequences.
