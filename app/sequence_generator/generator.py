@@ -14,10 +14,11 @@ from app.storage.storage import StorageEngine
 from app.utils.utils import JobConfig
 
 
-#### SEQUENCE ENGINE ####
+# SEQUENCE ENGINE ####
 
 class SequenceConfigRefactor:
     """This class is used to handle the configuration of audio sequences."""
+
     def __init__(self, job_params):
         """
         Initialize the SequenceConfigRefactor with job parameters.
@@ -108,10 +109,14 @@ class SequenceConfigRefactor:
         :return: A list representing the note sequence.
         """
         notes_match_table = pd.read_pickle("app/sequence_generator/notes_match_table.pkl")
-        notes_sequence_raw = notes_match_table.query("scale_name==@scale_value & key==@keynote").filter(["notes"])
+        notes_sequence_raw = notes_match_table.query(
+            "scale_name==@scale_value & key==@keynote"
+        ).filter(["notes"])
         notes_sequence_extracted_str = notes_sequence_raw["notes"].values[0].split(", ")
         notes_sequence_extracted_int = [int(i) for i in notes_sequence_extracted_str]
-        notes_sequence_extracted_int_octave_down = [(i - 12) for i in notes_sequence_extracted_int]
+        notes_sequence_extracted_int_octave_down = [
+            (i - 12) for i in notes_sequence_extracted_int
+        ]
         return notes_sequence_extracted_int_octave_down + notes_sequence_extracted_int
 
     def _load_audio(self, path):
@@ -135,8 +140,15 @@ class SequenceConfigRefactor:
         """
         one_bar = 60 / bpm * 4
         pulse_length_samples = self.sample_rate * one_bar / k
-        equal_to_total = True if (math.floor(len(audio) / pulse_length_samples)) <= 1 else False
-        grid_value = len(audio) if equal_to_total else math.floor(len(audio) / pulse_length_samples) * pulse_length_samples - pulse_length_samples
+        equal_to_total = (
+            True if (math.floor(len(audio) / pulse_length_samples)) <= 1 else False
+        )
+        grid_value = (
+            len(audio)
+            if equal_to_total
+            else math.floor(len(audio) / pulse_length_samples) * pulse_length_samples
+            - pulse_length_samples
+        )
         return grid_value, pulse_length_samples
 
     def _calculate_audio_frames_length(self, pulse_sequence, pulse_length_samples):
@@ -180,7 +192,6 @@ class SequenceConfigRefactor:
 
 
 class SequenceAudioFrameSlicer:
-    
     def __init__(self, sequence_config):
         """
         Initialize the SequenceAudioFrameSlicer with sequence configuration.
@@ -203,8 +214,17 @@ class SequenceAudioFrameSlicer:
         unique_audio_frames_lengths = np.unique(audio_frames_lengths)
 
         sequence_l = []
-        for audio_lengths, audio_reps in zip(unique_audio_frames_lengths, audio_frames_reps):
-            stop_range = int(audio_lengths * (1 if audio_lengths * audio_reps - audio_lengths == 0 else audio_reps - 1))
+        for audio_lengths, audio_reps in zip(
+            unique_audio_frames_lengths, audio_frames_reps
+        ):
+            stop_range = int(
+                audio_lengths
+                * (
+                    1
+                    if audio_lengths * audio_reps - audio_lengths == 0
+                    else audio_reps - 1
+                )
+            )
             sequence_l.append(np.arange(0, stop_range, int(audio_lengths)))
         return sequence_l
 
@@ -219,10 +239,14 @@ class SequenceAudioFrameSlicer:
         sliced_frames = []
 
         if unique_frame_length > len(self.audio):
-            self.audio = np.append(self.audio, np.zeros(int(unique_frame_length) - len(self.audio)))
+            self.audio = np.append(
+                self.audio, np.zeros(int(unique_frame_length) - len(self.audio))
+            )
 
         for frame in individual_frames:
-            sliced_frames.append(self.audio[int(frame):int(frame) + int(unique_frame_length)])
+            sliced_frames.append(
+                self.audio[int(frame): int(frame) + int(unique_frame_length)]
+            )
         return sliced_frames
 
     def get_audio_frames(self):
@@ -232,15 +256,20 @@ class SequenceAudioFrameSlicer:
         :return: A list of lists containing numpy arrays of sliced audio frames.
         """
         sequence_l = self.get_audio_frame_sequence_list()
-        unique_audio_frames_lengths = np.unique(self.sequence_config.get_audio_frames_length())
-        return [self.frames_list(x, y) for x, y in zip(sequence_l, map(int, unique_audio_frames_lengths))]
-
+        unique_audio_frames_lengths = np.unique(
+            self.sequence_config.get_audio_frames_length()
+        )
+        return [
+            self.frames_list(x, y)
+            for x, y in zip(sequence_l, map(int, unique_audio_frames_lengths))
+        ]
 
 
 class SequenceEngine:
     """
     This class is used to generate, validate and manipulate audio sequences.
     """
+
     def __init__(self, sequence_config, audio_frames):
         """
         Initialize the SequenceEngine with sequence configuration and audio frames.
@@ -257,7 +286,7 @@ class SequenceEngine:
     @staticmethod
     def validate_sequence(bpm, new_sequence):
         """
-        Validates the sequence based on bpm and the new sequence. 
+        Validates the sequence based on bpm and the new sequence.
 
         :param bpm: Beats per minute.
         :param new_sequence: The newly generated sequence.
@@ -267,9 +296,7 @@ class SequenceEngine:
         original_sample_len = round(44100 * one_bar / 1)
 
         try:
-            new_sequence_unpacked = [
-                item for sublist in new_sequence for item in sublist
-            ]
+            new_sequence_unpacked = [item for sublist in new_sequence for item in sublist]
         except TypeError:
             new_sequence_unpacked = new_sequence
 
@@ -335,17 +362,23 @@ class SequenceEngine:
 
         new_audio_sequence = [
             random.choices(my_audio_frames[i], k=nr_elements_to_select)
-            for i, nr_elements_to_select in enumerate(occurences_of_distinct_frames.values())
+            for i, nr_elements_to_select in enumerate(
+                occurences_of_distinct_frames.values()
+            )
         ]
 
         new_sequence_unlisted = self.__unpack_multi_level_list(new_audio_sequence)
 
         note_sequence = self.sequence_config.get_note_sequence()
-        note_sequence_updated = random.choices(note_sequence, k=len(new_sequence_unlisted))
+        note_sequence_updated = random.choices(
+            note_sequence, k=len(new_sequence_unlisted)
+        )
 
         bpm = self.get_job_params()["bpm"]
 
-        updated_new_audio_sequence = self.__apply_pitch_shift(new_sequence_unlisted, note_sequence_updated)
+        updated_new_audio_sequence = self.__apply_pitch_shift(
+            new_sequence_unlisted, note_sequence_updated
+        )
         validated_audio_sequence = self.validate_sequence(bpm, updated_new_audio_sequence)
 
         return validated_audio_sequence, updated_new_audio_sequence
@@ -362,13 +395,15 @@ class SequenceEngine:
 
         audio_frames_sequence = [
             np.random.choice(audio_frame, int(unique_length), replace=False)
-            for audio_frame, unique_length in zip(audio_frames, unique_audio_frames_lengths)
+            for audio_frame, unique_length in zip(
+                audio_frames, unique_audio_frames_lengths
+            )
         ]
 
         return self.__unpack_multi_level_list(audio_frames_sequence)
 
 
-##### AUDIO ENGINE #####
+# AUDIO ENGINE #####
 
 
 class AudioEngine:
@@ -380,6 +415,7 @@ class AudioEngine:
         file_loc (str): The location of the audio file.
         normalized (bool): Whether the audio data is normalized.
     """
+
     def __init__(self, validated_audio_sequence, file_loc, normalized=False):
         """
         The constructor for the AudioEngine class.
@@ -438,8 +474,14 @@ class AudioEngine:
 
         try:
             audio_seq_array = np.array(self.audio_sequence)
-            channels = 2 if (audio_seq_array.ndim == 2 and audio_seq_array.shape[1] == 2) else 1
-            y = np.int16(audio_seq_array * 2**15) if self.normalized else np.int16(audio_seq_array)
+            channels = (
+                2 if (audio_seq_array.ndim == 2 and audio_seq_array.shape[1] == 2) else 1
+            )
+            y = (
+                np.int16(audio_seq_array * 2**15)
+                if self.normalized
+                else np.int16(audio_seq_array)
+            )
 
             sequence = pydub.AudioSegment(
                 y.tobytes(), frame_rate=44100, sample_width=2, channels=channels
@@ -450,12 +492,12 @@ class AudioEngine:
             raise
 
 
-#### RUN JOB ####
+# RUN JOB ####
 
 
 class JobRunner:
     """
-    This class orchestrates the execution of a job that involves getting assets, validating them, 
+    This class orchestrates the execution of a job that involves getting assets, validating them,
     running the job, and cleaning up afterwards.
 
     Attributes:
@@ -484,6 +526,7 @@ class JobRunner:
     execute():
         Executes the job workflow.
     """
+
     def __init__(self, job_id, channel_index, random_id):
         self.job_id = job_id
         self.channel_index = channel_index
@@ -525,7 +568,6 @@ class JobRunner:
 
     def clean_up(self):
         try:
-            
             StorageEngine(self.job_params, "asset_path").delete_local_object()
         except Exception as e:
             self.logger.error(f"Error cleaning up: {e}")
@@ -546,4 +588,3 @@ class JobRunner:
         except Exception as e:
             self.logger.error(f"Error executing job: {e}")
             return False
-

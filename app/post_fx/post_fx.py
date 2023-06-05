@@ -13,6 +13,7 @@ from app.sequence_generator.generator import SequenceEngine, AudioEngine
 from app.storage.storage import StorageEngine
 from app.utils.utils import JobConfig
 
+
 class FxParamsModel(BaseModel):
     """
     Pydantic model for validating audio FX inputs.
@@ -20,6 +21,7 @@ class FxParamsModel(BaseModel):
     Attributes:
         audio_fx (str): The audio effect to be applied.
     """
+
     job_id: str
     fx_input: str
     channel_index: str
@@ -38,7 +40,7 @@ class FxParamsModel(BaseModel):
     @validator("fx_input")
     def fx_input_validator(cls, v):
         v = v.split("_")
-        if len(v) != 6 and ("0", "1", "2", "3","4","5", "6" "F") not in v:
+        if len(v) != 6 and ("0", "1", "2", "3", "4", "5", "6" "F") not in v:
             raise ValueError("mute_params is not correct")
         return v
 
@@ -86,7 +88,7 @@ class MuteEngine:
         mix_params: The mix parameters.
         job_params: The job parameters.
     """
-    
+
     def __init__(self, mix_params, job_params):
         self.mix_params = mix_params
         self.job_params = job_params
@@ -131,6 +133,7 @@ class VolEngine:
         job_params: The job parameters.
         my_sequence: The audio sequence to adjust.
     """
+
     def __init__(self, mix_params, job_params, my_sequence):
         self.mix_params = mix_params
         self.job_params = job_params
@@ -151,7 +154,6 @@ class VolEngine:
             bpm, self.pre_processed_sequence
         )
 
-     
         vol = self.mix_params.vol[channel_index] / 100
         if vol == 0:
             my_sequence_vol_applied = np.zeros(len(my_sequence_unpacked))
@@ -180,6 +182,7 @@ class FxPedalBoardConfig(BaseModel):
     Attributes:
         audio_fx (str): The audio effect to be applied.
     """
+
     audio_fx: str
 
     @validator("audio_fx")
@@ -198,6 +201,7 @@ class FxPedalBoardEngine:
         job_params: The job parameters.
         my_sequence: The audio sequence to apply FX to.
     """
+
     def __init__(self, mix_params, job_params, my_sequence):
         self.mix_params = mix_params
         self.job_params = job_params
@@ -239,7 +243,15 @@ class FxPedalBoardEngine:
         Returns:
             tuple: The built pedalboard and the audio FX.
         """
-        fx_mapping = ["Bitcrush", "Chorus", "Delay", "Phaser", "Reverb", "Distortion", "VST_Portal"]
+        fx_mapping = [
+            "Bitcrush",
+            "Chorus",
+            "Delay",
+            "Phaser",
+            "Reverb",
+            "Distortion",
+            "VST_Portal",
+        ]
         fx = fx_mapping[int(fx_input)]
         print("printing FX debug", fx)
 
@@ -299,7 +311,7 @@ class FxPedalBoardEngine:
         pedalboard_fx = getattr(pedalboard, validated_fx.audio_fx)
         board = pedalboard.Pedalboard([pedalboard_fx()])
         return board
-    
+
     def apply_fx_to_audio(self, fx_board, fx):
         """
         Applies the audio FX to the audio sequence.
@@ -313,9 +325,9 @@ class FxPedalBoardEngine:
         """
         try:
             if "VST" in fx:
-                print('applying vst effect...')
+                print("applying vst effect...")
                 mono_input = self.my_sequence
-  
+
                 stereo_audio = np.column_stack((mono_input, mono_input))
                 stereo_output = fx_board(stereo_audio, 44100.0)
                 effected = np.mean(stereo_output, axis=1)
@@ -326,7 +338,9 @@ class FxPedalBoardEngine:
             return None
         else:
             y_effected = np.int16(effected * 2**15)
-            normalized_y_effected = np.interp(y_effected, (y_effected.min(), y_effected.max()), (-1, +1))
+            normalized_y_effected = np.interp(
+                y_effected, (y_effected.min(), y_effected.max()), (-1, +1)
+            )
             return normalized_y_effected
 
     def save_audio(self, audio_data):
@@ -361,6 +375,7 @@ class FxRunner:
         channel_index: The channel index.
         random_id: The random ID.
     """
+
     def __init__(self, mix_params, job_id, channel_index, random_id):
         self.mix_params = mix_params
         self.job_id = job_id
@@ -381,18 +396,14 @@ class FxRunner:
 
     def _apply_mute_engine(self):
         try:
-            return MuteEngine(
-                self.mix_params, self.job_params
-            ).apply_selective_mutism()
+            return MuteEngine(self.mix_params, self.job_params).apply_selective_mutism()
         except Exception as e:
             logging.error(f"Error in MuteEngine: {e}")
             raise
 
     def _apply_vol_engine(self, sequence):
         try:
-            return VolEngine(
-                self.mix_params, self.job_params, sequence
-            ).apply_volume()
+            return VolEngine(self.mix_params, self.job_params, sequence).apply_volume()
         except Exception as e:
             logging.error(f"Error in VolEngine: {e}")
             raise
@@ -427,6 +438,3 @@ class FxRunner:
         except Exception as e:
             logging.error(f"Error during execution: {e}")
             raise
-
-
-

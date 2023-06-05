@@ -6,6 +6,7 @@ import json
 import itertools
 import glob
 
+
 class TestJobTypeValidator(unittest.TestCase):
     def test_valid_job_types(self):
         valid_job_types = [
@@ -28,14 +29,15 @@ class TestJobTypeValidator(unittest.TestCase):
         with self.assertRaises(ValidationError):
             JobTypeValidator(job_type="invalid_job_type")
 
+
 class TestJobConfig(unittest.TestCase):
     def setUp(self):
-        self.job_id = 'temp/test.json'
+        self.job_id = "temp/test.json"
         self.channel_index = 1
-        self.random_id = 'random1'
+        self.random_id = "random1"
         self.job_config = JobConfig(self.job_id, self.channel_index, self.random_id)
         # write a sample json file for testing
-        with open(self.job_id, 'w') as f:
+        with open(self.job_id, "w") as f:
             json.dump(["test"], f)
 
     def tearDown(self):
@@ -43,46 +45,50 @@ class TestJobConfig(unittest.TestCase):
 
     def test_has_initial_index(self):
         self.assertTrue(self.job_config.has_initial_index(self.job_id))
-        self.assertFalse(self.job_config.has_initial_index('invalid/path'))
+        self.assertFalse(self.job_config.has_initial_index("invalid/path"))
 
     def test_path_resolver(self):
         paths = self.job_config.path_resolver()
-        self.assertIn('cloud_path', paths)
-        self.assertIn('local_path', paths)
+        self.assertIn("cloud_path", paths)
+        self.assertIn("local_path", paths)
 
     # def test_psuedo_json_to_dict(self):
     #     result = self.job_config.__psuedo_json_to_dict()
     #     self.assertIsInstance(result, list)
 
+
 class TestJobUtils(unittest.TestCase):
     def test_sanitize_job_id(self):
-        job_id = 'job_ids/test.json'
+        job_id = "job_ids/test.json"
         job_utils = JobUtils(job_id)
-        sanitized_job_id = job_utils.sanitize_job_id()  # calling method without passing job_id as argument
-        self.assertEqual(sanitized_job_id, 'test')
+        sanitized_job_id = (
+            job_utils.sanitize_job_id()
+        )  # calling method without passing job_id as argument
+        self.assertEqual(sanitized_job_id, "test")
 
     def test_list_files_matching_pattern(self):
-        files = JobUtils.list_files_matching_pattern(['*.py'], 'tests', 'test_utils.py')
+        files = JobUtils.list_files_matching_pattern(["*.py"], "tests", "test_utils.py")
         print(files)
-        self.assertTrue(any('test_utils.py' in file for file in files))
+        self.assertTrue(any("test_utils.py" in file for file in files))
 
     def test_remove_files(self):
         # write a sample file for testing
-        with open('temp_test_file', 'w') as f:
-            f.write('test')
-        self.assertTrue(JobUtils.remove_files(['temp_test_file']))
-        self.assertFalse(os.path.exists('temp_test_file'))
+        with open("temp_test_file", "w") as f:
+            f.write("test")
+        self.assertTrue(JobUtils.remove_files(["temp_test_file"]))
+        self.assertFalse(os.path.exists("temp_test_file"))
+
 
 class TestJobCleanUp(unittest.TestCase):
     def setUp(self):
         # Create temporary files for testing
-        self.asset_file = 'assets/sounds/test.mp3'
-        with open(self.asset_file, 'w') as f:
-            f.write('test')
+        self.asset_file = "assets/sounds/test.mp3"
+        with open(self.asset_file, "w") as f:
+            f.write("test")
 
-        self.temp_file = 'temp/test.pkl'
-        with open(self.temp_file, 'w') as f:
-            f.write('test')
+        self.temp_file = "temp/test.pkl"
+        with open(self.temp_file, "w") as f:
+            f.write("test")
 
     def tearDown(self):
         # Clean up temporary files after testing
@@ -97,28 +103,29 @@ class TestJobCleanUp(unittest.TestCase):
             print(f"{self.temp_file} not found.")
 
     def test_assets(self):
-        job_cleanup = JobCleanUp('job_id')
+        job_cleanup = JobCleanUp("job_id")
         status = job_cleanup.assets()
         self.assertTrue(all(status))
 
     def test_temp(self):
-        job_cleanup = JobCleanUp('job_id')
+        job_cleanup = JobCleanUp("job_id")
         status = job_cleanup.temp()
         self.assertTrue(all(status))
+
 
 class TestPurgeAll(unittest.TestCase):
     def setUp(self):
         # Create temporary files for testing
         self.temp_files = [
-            'temp/file1.txt',
-            'temp/file2.txt',
-            'temp/file3.pkl',
-            'temp/file4.json',
-            'temp/file5.mp3',
+            "temp/file1.txt",
+            "temp/file2.txt",
+            "temp/file3.pkl",
+            "temp/file4.json",
+            "temp/file5.mp3",
         ]
         for file in self.temp_files:
-            with open(file, 'w') as f:
-                f.write('test')
+            with open(file, "w") as f:
+                f.write("test")
 
     def tearDown(self):
         # Clean up temporary files after testing
@@ -127,13 +134,22 @@ class TestPurgeAll(unittest.TestCase):
                 os.remove(file)
 
     def test_purge_all(self):
-        my_paths = ['temp']
-        my_patterns = ['*.txt', '*.pkl']
+        my_paths = ["temp"]
+        my_patterns = ["*.txt", "*.pkl"]
         result = purge_all(my_paths, my_patterns)
 
-        files_remaining = list(itertools.chain(*(glob.glob(os.path.join(path, ext)) for path in my_paths for ext in my_patterns)))
+        files_remaining = list(
+            itertools.chain(
+                *(
+                    glob.glob(os.path.join(path, ext))
+                    for path in my_paths
+                    for ext in my_patterns
+                )
+            )
+        )
         self.assertFalse(files_remaining)
         self.assertTrue(result)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

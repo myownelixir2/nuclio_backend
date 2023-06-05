@@ -180,3 +180,5 @@ cython_debug/
 
 # doodles
 debugging.ipynb
+
+.trunk
