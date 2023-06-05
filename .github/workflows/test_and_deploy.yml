@@ -50,7 +50,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt update
-          sudo apt install -y ibssl-dev libcurl4-openssl-dev \
+          sudo apt install -y libssl-dev libcurl4-openssl-dev \
           libpq-dev libssh2-1-dev libxml2-dev libcairo2-dev \
           libsndfile1-dev \
           ffmpeg
