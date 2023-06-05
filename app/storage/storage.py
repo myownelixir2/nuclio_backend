@@ -17,13 +17,15 @@ from pydantic import Field, BaseSettings, validator
 from app.utils.utils import JobTypeValidator
 
 
-
-
 class StorageBase:
-    def __init__(self, bucket= None, client=None, resource=None):
+    def __init__(self, bucket=None, client=None, resource=None):
         self.bucket = bucket
-        self.client = client if client else self.client_init()  # Use provided client, if none provided call client_init
-        self.resource = resource if resource else self.resource_init()  # Use provided resource, if none provided call resource_init
+        self.client = (
+            client if client else self.client_init()
+        )  # Use provided client, if none provided call client_init
+        self.resource = (
+            resource if resource else self.resource_init()
+        )  # Use provided resource, if none provided call resource_init
         self.logger = logging.getLogger(__name__)  # initialize logger
 
     def resource_init(self):
@@ -52,6 +54,7 @@ class StorageBase:
             self.logger.error(f"Error initializing S3 client: {e}")
             raise e
 
+
 class StorageCreds(BaseSettings):
     """
     A class used to manage and validate storage credentials.
@@ -65,11 +68,10 @@ class StorageCreds(BaseSettings):
     secret_access_key : str
         The secret access key for the storage.
     """
+
     endpoint_url: str = Field(..., env="STORAGE_URL")
     access_key_id: str = Field(..., env="STORAGE_KEY")
     secret_access_key: str = Field(..., env="STORAGE_SECRET")
-
-   
 
     @validator("endpoint_url", "access_key_id", "secret_access_key")
     def creds_validator(cls, v: Any) -> Any:
@@ -107,14 +109,16 @@ class StorageEngine(StorageBase):
     """
 
     def __init__(self, job_config, asset_type, bucket=None, client=None, resource=None):
-        super().__init__(bucket, client, resource)  # Call the parent class (StorageBase) constructor
+        super().__init__(
+            bucket, client, resource
+        )  # Call the parent class (StorageBase) constructor
         self.job_config = job_config
         self.asset_type = asset_type
         self.client = self.resource
 
     def __resolve_type(self):
         job_paths = self.job_config.path_resolver()
-     
+
         _check = JobTypeValidator.parse_obj({"job_type": self.asset_type})
 
         if _check.job_type == "job_id_path":
@@ -196,7 +200,7 @@ class StorageEngine(StorageBase):
             self.logger.error(f"Error uploading object to S3: {e}")
             raise e
 
-        
+
 class StoreEngineMultiFile(StorageBase):
     """
     This class handles the upload of multiple files to S3 storage.
@@ -213,6 +217,7 @@ class StoreEngineMultiFile(StorageBase):
     upload_list_of_objects(files: List[str], bucket_path: str):
         Uploads a list of files to a specified bucket path on S3.
     """
+
     def __init__(self, job_id, bucket="favs-dump", client=None, resource=None):
         """
         Initialize the S3 client.
@@ -221,16 +226,17 @@ class StoreEngineMultiFile(StorageBase):
         --------
         boto3.resource
             S3 client instance.
-        
+
         Raises:
         -------
         Exception
             If any error occurs during the client initialization.
         """
-        super().__init__(bucket, client, resource)  # Call the parent class (StorageBase) constructor
+        super().__init__(
+            bucket, client, resource
+        )  # Call the parent class (StorageBase) constructor
         self.job_id: str = job_id
         self.logger = logging.getLogger(__name__)
-
 
     def upload_list_of_objects(self, files: List[str], bucket_path: str) -> bool:
         """
@@ -253,19 +259,17 @@ class StoreEngineMultiFile(StorageBase):
         Exception
             If any error occurs during the file upload.
         """
+
         def sanitize_list(file_list: List[str]) -> List[str]:
             return [os.path.basename(file) for file in file_list]
 
         sanitized_files = sanitize_list(files)
         cloud_paths = [os.path.join(bucket_path, file) for file in sanitized_files]
-        
+
         try:
             bucket_local = self.resource.Bucket(self.bucket)
-           
-            buckets = [bucket.name for bucket in self.resource.buckets.all()]
-      
+
             for file, cloud_path in zip(files, cloud_paths):
-   
                 try:
                     bucket_local.upload_file(Filename=file, Key=cloud_path)
                 except Exception as e:
@@ -277,8 +281,6 @@ class StoreEngineMultiFile(StorageBase):
             raise e
 
 
-
-
 def handle_client_error(func):
     def wrapper(*args, **kwargs):
         try:
@@ -286,12 +288,14 @@ def handle_client_error(func):
         except ClientError as e:
             print(e)
             return None
+
     return wrapper
+
 
 class StorageEngineDownloader(StorageBase):
     """
-    This class represents a storage engine designed for downloading, manipulating, and uploading files 
-    using Amazon S3 storage. 
+    This class represents a storage engine designed for downloading, manipulating, and uploading files
+    using Amazon S3 storage.
 
     Attributes:
         bucket (str): The name of the S3 bucket to use for storage operations.
@@ -310,14 +314,23 @@ class StorageEngineDownloader(StorageBase):
         get_presigned_url(file_name, expires_in): Generate a presigned URL for a file in the bucket.
         upload_and_get_presigned_url(zip_name, in_memory_zip, expires_in): Upload a file to the bucket and generate a presigned URL for it.
     """
-    def __init__(self, bucket, client=None, resource=None, ):
+
+    def __init__(
+        self,
+        bucket,
+        client=None,
+        resource=None,
+    ):
         super().__init__(bucket, client, resource)
 
     @handle_client_error
     def copy_objects(self, source_key: str, destination_key: str):
         client_local = self.client
-        client_local.copy_object(Bucket=self.bucket,
-                           Key=destination_key, CopySource=f"{self.bucket}/{source_key}")
+        client_local.copy_object(
+            Bucket=self.bucket,
+            Key=destination_key,
+            CopySource=f"{self.bucket}/{source_key}",
+        )
         return True
 
     def download_in_memory_objects(self, key: str) -> io.BytesIO:
@@ -338,7 +351,7 @@ class StorageEngineDownloader(StorageBase):
             concatenated_audio += audio_data
 
         in_memory_arrangement = io.BytesIO()
- 
+
         concatenated_audio.export(in_memory_arrangement, format="wav")
         in_memory_arrangement.seek(0)
 
@@ -363,16 +376,22 @@ class StorageEngineDownloader(StorageBase):
     @staticmethod
     def generate_random_string(length):
         letters = string.ascii_lowercase
-        return ''.join(random.choice(letters) for i in range(length))
+        return "".join(random.choice(letters) for i in range(length))
 
     @staticmethod
     def filter_files(file_list, suffix, mixdown_ids):
-        return [file for file in file_list if file.endswith(suffix) and any(id_str in file for id_str in mixdown_ids)]
+        return [
+            file
+            for file in file_list
+            if file.endswith(suffix) and any(id_str in file for id_str in mixdown_ids)
+        ]
 
     def create_zip_file(self, my_files):
         client_local = self.client
         in_memory_zip = io.BytesIO()
-        with zipfile.ZipFile(in_memory_zip, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+        with zipfile.ZipFile(
+            in_memory_zip, mode="w", compression=zipfile.ZIP_DEFLATED
+        ) as archive:
             for obj in my_files:
                 file = client_local.get_object(Bucket=self.bucket, Key=obj)
                 archive.writestr(obj, file["Body"].read())
@@ -401,39 +420,41 @@ class StorageEngineDownloader(StorageBase):
         return response
 
 
-
 class SnapshotManager(StorageBase):
-    SNAPSHOT_CSV = 'database_snapshot.csv'
-    SNAPSHOT_FILES_CSV = 'database_snapshot_files.csv'
-    SNAPSHOTS_DUMP_BUCKET = 'snapshots-dump'
+    SNAPSHOT_CSV = "database_snapshot.csv"
+    SNAPSHOT_FILES_CSV = "database_snapshot_files.csv"
+    SNAPSHOTS_DUMP_BUCKET = "snapshots-dump"
     FILTER_OUT_LABELS = ["sequences", "favourite", "my_favourites", "mixdown"]
 
     """
     This class represents a manager for handling snapshots in Amazon S3 storage.
     """
+
     def __init__(self, bucket, client=None, resource=None):
         super().__init__(bucket, client, resource)
-        #self.bucket_obj = self.resource.Bucket(self.bucket)
+        # self.bucket_obj = self.resource.Bucket(self.bucket)
         self.snapshot_df = None
         self.snapshot_files_df = None
-        
+
     def build_snapshot(self):
         """
-        Builds a snapshot of all the objects in the bucket and saves it as a CSV file in S3. 
+        Builds a snapshot of all the objects in the bucket and saves it as a CSV file in S3.
         The snapshot is a pandas DataFrame consisting of the paths of all the files in the bucket.
         """
         try:
             local_resource = self.resource.Bucket(self.bucket)
-            
+
             files_list = [f.key for f in local_resource.objects.all()]
-            self.snapshot_df = pd.DataFrame(files_list, columns=['paths'])
+            self.snapshot_df = pd.DataFrame(files_list, columns=["paths"])
             # Save the snapshot_df to a CSV in memory
             print(self.snapshot_df)
             csv_buffer = io.StringIO()
             self.snapshot_df.to_csv(csv_buffer, index=False)
 
             # Upload the CSV to S3
-            self.resource.Object(self.SNAPSHOTS_DUMP_BUCKET, self.SNAPSHOT_CSV).put(Body=csv_buffer.getvalue())
+            self.resource.Object(self.SNAPSHOTS_DUMP_BUCKET, self.SNAPSHOT_CSV).put(
+                Body=csv_buffer.getvalue()
+            )
             return True
         except ClientError as e:
             self.logger.error(f"Error building snapshot: {e}")
@@ -461,18 +482,24 @@ class SnapshotManager(StorageBase):
         if self.snapshot_df is not None:
             return
         s3_key = self.SNAPSHOT_CSV
-        csv_obj = self.resource.Object(self.bucket, s3_key).get()['Body']
-        csv_buffer = io.StringIO(csv_obj.read().decode('utf-8'))
+        csv_obj = self.resource.Object(self.bucket, s3_key).get()["Body"]
+        csv_buffer = io.StringIO(csv_obj.read().decode("utf-8"))
         self.snapshot_df = pd.read_csv(csv_buffer)
 
     def process_snapshot_data(self):
         """
         Processes the snapshot data by filtering out certain types of files and splitting the file paths into 'label' and 'file' columns.
         """
-        self.snapshot_files_df = self.snapshot_df[self.snapshot_df['paths'].str.endswith('.mp3')].copy()
-        self.snapshot_files_df['bucket'] = self.bucket
-        self.snapshot_files_df[['label', 'file']] = self.snapshot_files_df['paths'].str.split('/', expand=True)
-        self.snapshot_files_df = self.snapshot_files_df[~self.snapshot_files_df['label'].isin(self.FILTER_OUT_LABELS)]
+        self.snapshot_files_df = self.snapshot_df[
+            self.snapshot_df["paths"].str.endswith(".mp3")
+        ].copy()
+        self.snapshot_files_df["bucket"] = self.bucket
+        self.snapshot_files_df[["label", "file"]] = self.snapshot_files_df[
+            "paths"
+        ].str.split("/", expand=True)
+        self.snapshot_files_df = self.snapshot_files_df[
+            ~self.snapshot_files_df["label"].isin(self.FILTER_OUT_LABELS)
+        ]
 
     def save_snapshot_files_to_s3(self):
         """
@@ -481,18 +508,29 @@ class SnapshotManager(StorageBase):
         csv_buffer = io.StringIO()
         self.snapshot_files_df.to_csv(csv_buffer, index=False)
         s3_key = self.SNAPSHOT_FILES_CSV
-        self.resource.Object(self.SNAPSHOTS_DUMP_BUCKET, s3_key).put(Body=csv_buffer.getvalue())
+        self.resource.Object(self.SNAPSHOTS_DUMP_BUCKET, s3_key).put(
+            Body=csv_buffer.getvalue()
+        )
 
     def generate_presigned_urls(self):
         """
         Generate pre-signed URLs for database snapshot and snapshot files.
         """
         try:
-            url_1 = self.client.generate_presigned_url('get_object', Params={'Bucket': self.SNAPSHOTS_DUMP_BUCKET, 'Key': self.SNAPSHOT_CSV}, ExpiresIn=3600)
-            url_2 = self.client.generate_presigned_url('get_object', Params={'Bucket': self.SNAPSHOTS_DUMP_BUCKET, 'Key': self.SNAPSHOT_FILES_CSV}, ExpiresIn=3600)
+            url_1 = self.client.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": self.SNAPSHOTS_DUMP_BUCKET, "Key": self.SNAPSHOT_CSV},
+                ExpiresIn=3600,
+            )
+            url_2 = self.client.generate_presigned_url(
+                "get_object",
+                Params={
+                    "Bucket": self.SNAPSHOTS_DUMP_BUCKET,
+                    "Key": self.SNAPSHOT_FILES_CSV,
+                },
+                ExpiresIn=3600,
+            )
             return url_1, url_2
         except ClientError as e:
             self.logger.error(f"Error generating presigned urls: {e}")
             raise e
-
-
