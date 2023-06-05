@@ -20,7 +20,6 @@ class FxPedalBoardEngine:
         self.my_sequence = my_sequence
 
     def apply_pedalboard_fx(self):
-
         fx_mapping = [
             "Bitcrush",
             "Chorus",

@@ -14,6 +14,7 @@ import os
 
 from pydantic import BaseSettings, BaseModel
 
+
 class FirebaseConfig(BaseSettings):
     firebase_api_key: str
     firebase_email: str
@@ -22,59 +23,61 @@ class FirebaseConfig(BaseSettings):
     class Config:
         env_file = "config.env"
 
+
 def get_access_token():
     config = FirebaseConfig()
     endpoint = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={config.firebase_api_key}"
     email = config.firebase_email
     password = config.firebase_password
-    data = {
-        "email": email,
-        "password": password,
-        "returnSecureToken": True
-    }
+    data = {"email": email, "password": password, "returnSecureToken": True}
     try:
-        resp = requests.post(endpoint, data=json.dumps(data), headers={"Content-Type": "application/json"})
+        resp = requests.post(
+            endpoint,
+            data=json.dumps(data),
+            headers={"Content-Type": "application/json"},
+        )
         resp.raise_for_status()  # raise an exception if the request failed
-        return resp.json()['idToken']
+        return resp.json()["idToken"]
     except requests.HTTPError as e:
         print(f"Authentication failed: {e}")
         return None
-    
-
 
 
 class SessionIdGenerator:
     def __init__(self):
-        self.adjectives = pd.read_csv('random_name_generator/english-adjectives.txt', header=None)
-        self.nouns = pd.read_csv('random_name_generator/english-nouns.txt', header=None)
+        self.adjectives = pd.read_csv(
+            "random_name_generator/english-adjectives.txt", header=None
+        )
+        self.nouns = pd.read_csv("random_name_generator/english-nouns.txt", header=None)
 
     def generate_random_id(self):
-        random_id = ''.join(random.choices(string.ascii_lowercase, k=6))
+        random_id = "".join(random.choices(string.ascii_lowercase, k=6))
         return random_id
-    
+
     def random_project_name(self):
         return f"{random.choice(self.adjectives[0])}_{random.choice(self.nouns[0])}"
-    
+
     def generate_session_id(self):
         date_string = datetime.now().strftime("%Y_%m_%d")
         return f"{date_string}_{self.random_project_name()}"
-    
+
     def generate_job_id(self):
-        part_1 = ''.join(random.choices(string.ascii_lowercase, k=4))
-        part_2 = ''.join(random.choices(string.ascii_lowercase, k=4))
-        part_3 = ''.join(random.choices(string.digits, k=4))
-        part_4 = ''.join(random.choices(string.ascii_uppercase, k=4))
+        part_1 = "".join(random.choices(string.ascii_lowercase, k=4))
+        part_2 = "".join(random.choices(string.ascii_lowercase, k=4))
+        part_3 = "".join(random.choices(string.digits, k=4))
+        part_4 = "".join(random.choices(string.ascii_uppercase, k=4))
 
         id = f"{int(time.time())}-{part_1}{part_2}{part_3}{part_4}"
 
         return id
-    
+
     def generate_cloud_job_id(self):
         session_id = self.generate_session_id()
         job_id = self.generate_job_id()
         cloud_job_id = f"job_ids/{session_id}__{job_id}.json"
         return cloud_job_id
-    
+
+
 class JobConfig(BaseModel):
     local_paths: List[str]
     cloud_paths: List[str]
@@ -118,7 +121,9 @@ class SequenceGenerator:
         return self.fx_mix_job_id
 
     def create_job(self, job_config: JobConfig):
-        job_create_url = f"{self.config.host_api_endpoint}/create_job?job_id={self.job_id}"
+        job_create_url = (
+            f"{self.config.host_api_endpoint}/create_job?job_id={self.job_id}"
+        )
         headers = {"Authorization": f"Bearer {self.access_token}"}
         json_string = dict(job_config)
 
@@ -130,7 +135,7 @@ class SequenceGenerator:
 
         return self.job_id
 
-    def create_sequence(self, channel_index: int, random_id: str = 'start'):
+    def create_sequence(self, channel_index: int, random_id: str = "start"):
         job_create_url = f"{self.config.host_api_endpoint}/get_sequence?job_id={self.job_id}&channel_index={channel_index}&random_id={random_id}"
         headers = {"Authorization": f"Bearer {self.access_token}"}
 
@@ -142,7 +147,16 @@ class SequenceGenerator:
 
         return self.job_id
 
-    def apply_fx(self, channel_index: int, fx_params: str, fx_params_preset: str, selective_mutism_switch: str, selective_mutism_value: str, vol_params: str, mute_params: str):
+    def apply_fx(
+        self,
+        channel_index: int,
+        fx_params: str,
+        fx_params_preset: str,
+        selective_mutism_switch: str,
+        selective_mutism_value: str,
+        vol_params: str,
+        mute_params: str,
+    ):
         http_paths = f"{self.config.host_api_endpoint}/apply_fx?job_id={self.job_id}&channel_index={channel_index}&random_id={self.fx_mix_job_id}&fx_input={fx_params}&preset={fx_params_preset}&selective_mutism_switch={selective_mutism_switch}&selective_mutism_value={selective_mutism_value}&vol={vol_params}&channel_mute_params={mute_params}"
         headers = {"Authorization": f"Bearer {self.access_token}"}
 
@@ -165,7 +179,7 @@ class SequenceGenerator:
             print(f"Failed to mix sequences: {e}")
 
         return res.json() if res.status_code == 200 else None
-    
+
 
 class FileUtils:
     def __init__(self, sequence_generator: SequenceGenerator):
@@ -196,13 +210,15 @@ class FileUtils:
             print(f"Failed to purge temporary files: {e}")
 
     def presigned_url(self, bucket: str):
-        if not os.path.exists('temp/mixdown'):
-            os.makedirs('temp/mixdown')
+        if not os.path.exists("temp/mixdown"):
+            os.makedirs("temp/mixdown")
 
-        sanitized_mixdown_id = re.sub('.json', '_master.wav', re.sub('job_ids/', '', self.job_id))
+        sanitized_mixdown_id = re.sub(
+            ".json", "_master.wav", re.sub("job_ids/", "", self.job_id)
+        )
         mixdown_job_id = f"mixdown/mixdown_{self.fx_mix_job_id}_{sanitized_mixdown_id}"
 
-        local_mixdown_job_path = os.path.join('temp', mixdown_job_id)
+        local_mixdown_job_path = os.path.join("temp", mixdown_job_id)
         print(f"Downloading mixdown to {local_mixdown_job_path}")
         my_mixdown_url = f"{self.host_api_endpoint}/download_universal?bucket={bucket}&file_name={mixdown_job_id}"
 
@@ -225,7 +241,7 @@ class FileUtils:
             return None
 
         return local_mixdown_job_path
-    
+
 
 def execute_concurrently(func, *args_list):
     max_workers = 6
@@ -242,4 +258,3 @@ def execute_concurrently(func, *args_list):
         results.append(result)
 
     return results
-

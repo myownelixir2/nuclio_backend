@@ -7,36 +7,37 @@ from app.storage.storage import StorageEngine
 from app.utils.utils import JobConfig
 from app.sequence_generator.generator import SequenceEngine
 
+
 class MixEngine:
     """
-        MixEngine class mixes audio sequences.
-        Parameters:
-        job_params (JobConfig): Contains job configuration parameters.
-        normalize (bool): If True, normalizes the audio array to be between -1 and 1. Default is True.
+    MixEngine class mixes audio sequences.
+    Parameters:
+    job_params (JobConfig): Contains job configuration parameters.
+    normalize (bool): If True, normalizes the audio array to be between -1 and 1. Default is True.
 
     """
+
     def __init__(self, job_params, normalize=True):
         self.job_params = job_params
         self.normalized = normalize
 
     def mix_sequences_pkl(self):
         """
-         mix_sequences_pkl(): Mixes the audio sequences.
-            - Loads the .pkl pickle files in the temp folder that start with mixdown_ and the random ID.
-            - Validates and combines the sequences.
-            - Exports the mixed audio as a .wav file.
-            - Returns True if successful, False otherwise.
+        mix_sequences_pkl(): Mixes the audio sequences.
+           - Loads the .pkl pickle files in the temp folder that start with mixdown_ and the random ID.
+           - Validates and combines the sequences.
+           - Exports the mixed audio as a .wav file.
+           - Returns True if successful, False otherwise.
         """
 
         dir_path = r"temp"
         bpm = self.job_params.get_job_params()["bpm"]
         output_file = self.job_params.path_resolver()["local_path_mixdown_wav_master"]
-        #output_file = self.job_params.path_resolver()["local_path_mixdown_mp3_master"]
+        # output_file = self.job_params.path_resolver()["local_path_mixdown_mp3_master"]
         random_id = self.job_params.random_id
 
         res = []
         for file in os.listdir(dir_path):
-
             if file.startswith("mixdown_" + random_id) and file.endswith(".pkl"):
                 my_arrays = pickle.load(open(os.path.join(dir_path, file), "rb"))
 
@@ -80,7 +81,7 @@ class MixEngine:
         mix_sequences(): Mixes the audio sequences.
             - Gets the list of .mp3 files in the temp folder that start with mixdown_ and the random ID.
             - Constructs an ffmpeg command to mix the sequences.
-            - Executes the ffmpeg command. 
+            - Executes the ffmpeg command.
             - Returns True if successful, False otherwise.
         """
         random_id = self.job_params.random_id
@@ -115,6 +116,7 @@ class MixRunner:
         job_id (int): The job ID.
         random_id (str): The random ID for the job.
     """
+
     def __init__(
         self,
         job_id,
@@ -142,7 +144,7 @@ class MixRunner:
             - Gets the job parameters.
             - Mixes the sequences using MixEngine.
             - If successful, uploads the mixed audio file using StorageEngine.
-            - Returns True if successful, False otherwise. 
+            - Returns True if successful, False otherwise.
         """
         try:
             job_params = JobConfig(self.job_id, 0, self.random_id)

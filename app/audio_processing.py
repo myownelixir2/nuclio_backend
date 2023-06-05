@@ -16,10 +16,12 @@ audio_processing = APIRouter()
 
 
 @audio_processing.post("/get_sequence")
-def get_sequence(job_id: str, 
-                 channel_index: int, 
-                 random_id: str, 
-                 current_user: UserInDB = Depends(get_current_user)):
+def get_sequence(
+    job_id: str,
+    channel_index: int,
+    random_id: str,
+    current_user: UserInDB = Depends(get_current_user),
+):
     try:
         logger.info("Starting to build sequence...")
         job = JobRunner(job_id, channel_index, random_id)
@@ -50,9 +52,8 @@ def apply_fx(
     channel_mute_params: str,
     selective_mutism_value: str,
     preset: Optional[str] = None,
-    current_user: UserInDB = Depends(get_current_user)
+    current_user: UserInDB = Depends(get_current_user),
 ):
-
     mix_params = FxParamsModel(
         job_id=job_id,
         fx_input=fx_input,
@@ -61,12 +62,12 @@ def apply_fx(
         vol=vol,
         channel_mute_params=channel_mute_params,
         selective_mutism_value=selective_mutism_value,
-        preset=preset
+        preset=preset,
     )
     try:
         logger.info("Starting to apply fx...")
         job_params = JobConfig(job_id, channel_index, random_id=random_id)
-    
+
         fx = FxRunner(mix_params, job_id, channel_index, random_id)
         res = fx.execute()
 
@@ -81,12 +82,12 @@ def apply_fx(
         )
     else:
         return mix_params
-    
+
 
 @audio_processing.post("/mix_sequences")
-def mix_sequences(job_id: str, 
-                  random_id: str,
-                  current_user: UserInDB = Depends(get_current_user)):
+def mix_sequences(
+    job_id: str, random_id: str, current_user: UserInDB = Depends(get_current_user)
+):
     try:
         logger.info("Starting to mix sequences...")
 
@@ -104,32 +105,35 @@ def mix_sequences(job_id: str,
     except Exception as e:
         logger.error(e)
         return e
-    
+
 
 @audio_processing.post("/mix_arrangement")
-def mix_arrangement(bucket: str,
-                    prefix_: str,
-                    suffix_: str,
-                    mixdown_ids: str,
-                    arrange_id: str,
-                    current_user: UserInDB = Depends(get_current_user)):
-
+def mix_arrangement(
+    bucket: str,
+    prefix_: str,
+    suffix_: str,
+    mixdown_ids: str,
+    arrange_id: str,
+    current_user: UserInDB = Depends(get_current_user),
+):
     downloader = StorageEngineDownloader(bucket)
 
     # prepare filter params
-    full_prefix = f'steams/{prefix_}/mixdown_'
-    mixdown_ids = mixdown_ids.split('_')
+    full_prefix = f"steams/{prefix_}/mixdown_"
+    mixdown_ids = mixdown_ids.split("_")
     file_format = suffix_[-3:]
 
     # prepare output file
-    #timestamp = str(int(time.time()))
-    #random_string = downloader.generate_random_string(6)
-    output_file = f'steams/{prefix_}/arrangement_{arrange_id}.wav'
+    # timestamp = str(int(time.time()))
+    # random_string = downloader.generate_random_string(6)
+    output_file = f"steams/{prefix_}/arrangement_{arrange_id}.wav"
 
     # mixdown
     my_files = downloader.filter_objects(full_prefix)
     my_mixdown_files = downloader.filter_files(my_files, suffix_, mixdown_ids)
-    in_memory_arragement = downloader.create_arrangement_file(my_mixdown_files, file_format)
+    in_memory_arragement = downloader.create_arrangement_file(
+        my_mixdown_files, file_format
+    )
 
     # mixdown
     downloader.upload_in_memory_object(output_file, in_memory_arragement)

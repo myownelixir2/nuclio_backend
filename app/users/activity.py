@@ -5,11 +5,9 @@ from pydantic import Field, BaseSettings
 from typing import List
 
 
-
-
 class DatabaseSettings(BaseSettings):
     """
-    The DatabaseSettings class encapsulates the settings for the PostgreSQL database. 
+    The DatabaseSettings class encapsulates the settings for the PostgreSQL database.
     These settings include the host, database name, user, password, and port.
     The values are fetched from the environment variables.
     """
@@ -26,6 +24,7 @@ class UserActivityDB:
     The UserActivityDB class encapsulates methods for interacting with a user's activity records in the database.
     These interactions involve both querying and updating information in various tables.
     """
+
     def db_conn(self):
         """
         Establish a connection to the PostgreSQL database using the settings defined in the DatabaseSettings class.
@@ -40,10 +39,10 @@ class UserActivityDB:
             dbname=db_settings.dbname,
             user=db_settings.user,
             password=db_settings.password,
-            port=db_settings.port
+            port=db_settings.port,
         )
         return connection
-    
+
     def get_favourite_sessions(self, current_user_id):
         """
         Fetch the favourite session records for the current user.
@@ -88,7 +87,7 @@ class UserActivityDB:
         with my_conn.cursor() as cursor:
             cursor.execute(query, (current_user_id, current_session_id))
             check_session = cursor.fetchall()
-        print('checked is session exists in favs...')
+        print("checked is session exists in favs...")
 
         # If no session record exists, create one
         if not check_session:
@@ -103,7 +102,7 @@ class UserActivityDB:
         current_session_id (str): The unique identifier of the current session.
         """
 
-        print('updating db...')
+        print("updating db...")
         created_at = datetime.now()
         insert_query = """
         INSERT INTO favourite_sessions (session_id, user_id, created_at)
@@ -111,14 +110,16 @@ class UserActivityDB:
         """
         my_conn = self.db_conn()
         with my_conn.cursor() as cursor:
-            cursor.execute(insert_query, (current_session_id, current_user_id, created_at))
+            cursor.execute(
+                insert_query, (current_session_id, current_user_id, created_at)
+            )
             cursor.close()
             my_conn.commit()
         my_conn.close()
 
     def transform_file_names(self, file_names: List[str], folder: str, user_id: str):
         """
-        Transform the list of file names into a DataFrame, filtering based on certain conditions, and adding 
+        Transform the list of file names into a DataFrame, filtering based on certain conditions, and adding
         additional columns.
 
         Parameters:
@@ -134,7 +135,7 @@ class UserActivityDB:
 
         # Filter the DataFrame based on the specified conditions
         file_names_df = file_names_df[file_names_df["paths"].str.contains(f"{folder}/20")]
-        file_names_df = file_names_df[file_names_df["paths"].str.contains(r'\.(wav|mp3)')]
+        file_names_df = file_names_df[file_names_df["paths"].str.contains(r"\.(wav|mp3)")]
 
         # Add a new column 'bucket'
         file_names_df["bucket"] = "favs-dump"
@@ -143,16 +144,15 @@ class UserActivityDB:
         file_names_df["user_id"] = user_id
 
         # Split the 'paths' column into separate columns
-        #file_names_df[["folder", "session_id", "file"]] = file_names_df["paths"].str.split('/', expand=True)
-        split_df = file_names_df["paths"].str.split('/', expand=True)
+        # file_names_df[["folder", "session_id", "file"]] = file_names_df["paths"].str.split('/', expand=True)
+        split_df = file_names_df["paths"].str.split("/", expand=True)
         if split_df.shape[1] == 3:
             file_names_df[["folder", "session_id", "file"]] = split_df
         else:
-       
             file_names_df["folder"] = None
             file_names_df["session_id"] = None
             file_names_df["file"] = None
-     
+
         result_df = file_names_df[["paths", "session_id", "user_id"]]
 
         return result_df
@@ -175,9 +175,13 @@ class UserActivityDB:
             """
             cursor.execute(query, (current_session_id, current_user_id))
             my_sessions = cursor.fetchall()
-            my_sessions = pd.DataFrame(my_sessions, columns=["paths", "session_id", "user_id"])  
+            my_sessions = pd.DataFrame(
+                my_sessions, columns=["paths", "session_id", "user_id"]
+            )
 
-        my_sessions = my_sessions[my_sessions["paths"].str.contains("master.wav|master.mp3")]
+        my_sessions = my_sessions[
+            my_sessions["paths"].str.contains("master.wav|master.mp3")
+        ]
         my_sessions = my_sessions.drop_duplicates(subset="paths", keep="first")
 
         if len(my_sessions["paths"]) > 25:
@@ -240,8 +244,10 @@ class UserActivityDB:
                         cursor.executemany(insert_query, data_to_insert)
                         my_conn.commit()
         my_conn.close()
-    
-    def update_favourite_arrangements(self, updated_data, current_user_id, current_session_id):
+
+    def update_favourite_arrangements(
+        self, updated_data, current_user_id, current_session_id
+    ):
         """
         Update the favourite arrangements for a given user and session in the favourite_arrangements table.
         If the arrangement does not exist, it is inserted into the table. If it exists, the existing record is updated.
@@ -292,7 +298,7 @@ class UserActivityDB:
                         cursor.executemany(insert_query, data_to_insert)
                         my_conn.commit()
         my_conn.close()
-  
+
     def update_playlist_likes(self, current_user_id, session_id_):
         """
         Update the likes of a playlist for a given user and session in the playlist_likes table.
@@ -304,12 +310,14 @@ class UserActivityDB:
         """
         my_conn = self.db_conn()
         created_at_ = datetime.now()
-        new_likes = pd.DataFrame({
-            "session_id": [session_id_],
-            "user_id": [current_user_id],
-            "likes": [1],
-            "created_at": [created_at_]
-        })
+        new_likes = pd.DataFrame(
+            {
+                "session_id": [session_id_],
+                "user_id": [current_user_id],
+                "likes": [1],
+                "created_at": [created_at_],
+            }
+        )
 
         # Convert the DataFrame to a list of tuples
         data_to_insert = list(new_likes.itertuples(index=False))
@@ -327,7 +335,7 @@ class UserActivityDB:
 
         print("song added to likes...")
         my_conn.close()
-    
+
     def update_playlist_plays(self, current_user_id, session_id_):
         """
         Update the plays of a playlist for a given user and session in the playlist_plays table.
@@ -339,12 +347,14 @@ class UserActivityDB:
         """
         my_conn = self.db_conn()
         created_at_ = datetime.now()
-        new_plays = pd.DataFrame({
-            "session_id": [session_id_],
-            "user_id": [current_user_id],
-            "plays": [1],
-            "created_at": [created_at_]
-        })
+        new_plays = pd.DataFrame(
+            {
+                "session_id": [session_id_],
+                "user_id": [current_user_id],
+                "plays": [1],
+                "created_at": [created_at_],
+            }
+        )
 
         # Convert the DataFrame to a list of tuples
         data_to_insert = list(new_plays.itertuples(index=False))
@@ -383,7 +393,7 @@ class UserActivityDB:
                 GROUP BY session_id
             """
             cursor.execute(query_likes, (current_user_id,))
-            my_likes = pd.DataFrame(cursor.fetchall(), columns=['session_id', 'likes'])
+            my_likes = pd.DataFrame(cursor.fetchall(), columns=["session_id", "likes"])
 
             # Get plays
             query_plays = """
@@ -393,7 +403,7 @@ class UserActivityDB:
                 GROUP BY session_id
             """
             cursor.execute(query_plays, (current_user_id,))
-            my_plays = pd.DataFrame(cursor.fetchall(), columns=['session_id', 'plays'])
+            my_plays = pd.DataFrame(cursor.fetchall(), columns=["session_id", "plays"])
 
             # New query: Get one row per group from favourite_arrangement table
             query_arrangement = """
@@ -403,16 +413,23 @@ class UserActivityDB:
                 ORDER BY session_id
             """
             cursor.execute(query_arrangement, (current_user_id,))
-            my_arrangement = pd.DataFrame(cursor.fetchall(), columns=['user_id', 'session_id', 'paths'])
+            my_arrangement = pd.DataFrame(
+                cursor.fetchall(), columns=["user_id", "session_id", "paths"]
+            )
 
         my_conn.close()
         print("playlist stats retrieved...")
         # Merge likes, plays, and arrangement DataFrames on the 'session_id' column
-        merged_df = pd.merge(my_likes, my_plays, on='session_id', how='outer')
-        merged_df = pd.merge(merged_df, my_arrangement[['session_id', 'paths']], on='session_id', how='outer')
-        #merged_df.dropna(subset=['paths'], inplace=True)
-        json_res = merged_df.to_json(orient='records')
-        #my_stats = {"likes": merged_df['likes'].astype(str),
+        merged_df = pd.merge(my_likes, my_plays, on="session_id", how="outer")
+        merged_df = pd.merge(
+            merged_df,
+            my_arrangement[["session_id", "paths"]],
+            on="session_id",
+            how="outer",
+        )
+        # merged_df.dropna(subset=['paths'], inplace=True)
+        json_res = merged_df.to_json(orient="records")
+        # my_stats = {"likes": merged_df['likes'].astype(str),
         #            "plays": merged_df['plays'].astype(str),
         #            "session_id": merged_df['session_id'],
         #            "paths": merged_df['paths']}
@@ -421,7 +438,7 @@ class UserActivityDB:
 
 def transform_file_names(file_names: List[str], folder: str, user_id: str):
     """
-    Transform the list of file names into a DataFrame, filtering based on certain conditions, and adding 
+    Transform the list of file names into a DataFrame, filtering based on certain conditions, and adding
     additional columns.
 
     Parameters:
@@ -437,7 +454,7 @@ def transform_file_names(file_names: List[str], folder: str, user_id: str):
 
     # Filter the DataFrame based on the specified conditions
     file_names_df = file_names_df[file_names_df["paths"].str.contains(f"{folder}/20")]
-    file_names_df = file_names_df[file_names_df["paths"].str.contains(r'\.(wav|mp3)')]
+    file_names_df = file_names_df[file_names_df["paths"].str.contains(r"\.(wav|mp3)")]
 
     # Add a new column 'bucket'
     file_names_df["bucket"] = "favs-dump"
@@ -446,17 +463,15 @@ def transform_file_names(file_names: List[str], folder: str, user_id: str):
     file_names_df["user_id"] = user_id
 
     # Split the 'paths' column into separate columns
-    #file_names_df[["folder", "session_id", "file"]] = file_names_df["paths"].str.split('/', expand=True)
-    split_df = file_names_df["paths"].str.split('/', expand=True)
+    # file_names_df[["folder", "session_id", "file"]] = file_names_df["paths"].str.split('/', expand=True)
+    split_df = file_names_df["paths"].str.split("/", expand=True)
     if split_df.shape[1] == 3:
         file_names_df[["folder", "session_id", "file"]] = split_df
     else:
-    
         file_names_df["folder"] = None
         file_names_df["session_id"] = None
         file_names_df["file"] = None
-    
+
     result_df = file_names_df[["paths", "session_id", "user_id"]]
 
     return result_df
-

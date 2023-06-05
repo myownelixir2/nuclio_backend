@@ -16,8 +16,10 @@ class UserInDB(BaseModel):
     username : str
         The user's username.
     """
+
     username: str
-    
+
+
 class FirebaseSettings(BaseSettings):
     """
     A Pydantic model for Firebase settings.
@@ -32,9 +34,8 @@ class FirebaseSettings(BaseSettings):
     initialize_firebase():
         Initializes Firebase with the provided credentials.
     """
-    firebase_credential_json: str = Field(..., env="FIREBASE_CREDENTIAL_PATH")
 
-    
+    firebase_credential_json: str = Field(..., env="FIREBASE_CREDENTIAL_PATH")
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -44,9 +45,10 @@ class FirebaseSettings(BaseSettings):
         """
         Initializes Firebase with the provided credentials.
         """
-        #cred_json = json.loads(self.firebase_credential_json)
+        # cred_json = json.loads(self.firebase_credential_json)
         firebase_credentials = credentials.Certificate(self.firebase_credential_json)
         initialize_app(firebase_credentials)
+
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """
@@ -60,7 +62,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     Returns:
     --------
     UserInDB
-        A Pydantic model representing the user, if the token is valid. 
+        A Pydantic model representing the user, if the token is valid.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -74,11 +76,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise credentials_exception
 
     user = auth.get_user(uid)
-  
+
     if user is None:
         raise credentials_exception
 
     user_info = UserInDB(username=user.uid)
 
     return user_info
-

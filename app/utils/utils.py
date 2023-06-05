@@ -18,6 +18,7 @@ class JobTypeValidator(BaseModel):
             following: "job_id_path", "processed_job_path", "asset_path",
             "mixdown_job_path", "mixdown_job_path_master", or "mixdown_job_path_pkl".
     """
+
     job_type: Literal[
         "job_id_path",
         "processed_job_path",
@@ -62,6 +63,7 @@ class JobConfig:
         channel_index: An integer representing the channel index.
         random_id: A string representing a random ID.
     """
+
     def __init__(self, job_id: str, channel_index: int, random_id: str):
         """
         The constructor for JobConfig class.
@@ -74,7 +76,7 @@ class JobConfig:
         self.job_id = job_id
         self.channel_index = channel_index
         self.random_id = random_id
-    
+
     @staticmethod
     def has_initial_index(file_path):
         """
@@ -87,7 +89,7 @@ class JobConfig:
             bool: True if the file has an initial index, False otherwise.
         """
         try:
-            with open(file_path, 'r') as file:
+            with open(file_path, "r") as file:
                 json_obj = json.load(file)
                 return isinstance(json_obj, list) and len(json_obj) > 0
         except (ValueError, FileNotFoundError):
@@ -150,8 +152,8 @@ class JobConfig:
             "local_path_pre_mixdown_pkl": local_path_pre_mixdown_pkl,
             "local_path_mixdown_pkl": local_path_mixdown_pkl,
             "cloud_path_mixdown_pkl": cloud_path_mixdown_pkl,
-            "local_path_mixdown_wav" : local_path_mixdown_wav,
-            "cloud_path_mixdown_wav" : cloud_path_mixdown_wav,
+            "local_path_mixdown_wav": local_path_mixdown_wav,
+            "cloud_path_mixdown_wav": cloud_path_mixdown_wav,
             "local_path_mixdown_mp3": local_path_mixdown_mp3,
             "cloud_path_mixdown_mp3": cloud_path_mixdown_mp3,
             "local_path_mixdown_mp3_master": local_path_mixdown_mp3_master,
@@ -171,7 +173,7 @@ class JobConfig:
         """
         paths = self.path_resolver()
         inital_index = self.has_initial_index(paths["local_path"])
-        if(inital_index):
+        if inital_index:
             with open(paths["local_path"], "r") as lst:
                 json_psudo = json.load(lst)
                 json_sanitized = re.sub(
@@ -183,7 +185,6 @@ class JobConfig:
                 json_dict = json.load(lst)
 
         return json_dict
-    
 
     def get_job_params(self):
         """
@@ -217,6 +218,7 @@ class JobUtils:
     """
     A class providing utilities for job management.
     """
+
     def __init__(self, job_id: str):
         """
         The constructor for JobUtils class.
@@ -293,6 +295,7 @@ class JobCleanUp:
     """
     A class providing cleanup utilities for jobs.
     """
+
     def __init__(self, job_id: str):
         """
         The constructor for JobCleanUp class.
@@ -429,6 +432,7 @@ class JobCleanUp:
 
         return all(map(file_to_rem, files))
 
+
 def purge_all(my_paths: List[str], my_patterns: List[str]) -> bool:
     """
     Purges all files matching the given patterns in the specified paths.
@@ -450,6 +454,3 @@ def purge_all(my_paths: List[str], my_patterns: List[str]) -> bool:
         os.remove(f)
 
     return True
-
-
-
