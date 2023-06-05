@@ -34,6 +34,7 @@ jobs:
           black --line-length 90 --check .
 
   run-tests:
+    needs: lint-python
     runs-on: ubuntu-latest
     continue-on-error: false
 
@@ -64,6 +65,7 @@ jobs:
           bash tests/run_tests.sh
 
   docker-build:
+    needs: run-tests
     runs-on: ubuntu-latest
     continue-on-error: false
 
