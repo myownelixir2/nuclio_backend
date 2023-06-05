@@ -34,6 +34,7 @@ jobs:
           black --line-length 90 --check .
 
   run-tests:
+    needs: lint-python
     runs-on: ubuntu-latest
     continue-on-error: false
 
@@ -49,9 +50,10 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt update
-          sudo apt install -y autoconf autogen automake build-essential libasound2-dev \
-          libflac-dev libogg-dev libtool libvorbis-dev libopus-dev libmp3lame-dev \
-          libmpg123-dev
+          sudo apt install -y ibssl-dev libcurl4-openssl-dev \
+          libpq-dev libssh2-1-dev libxml2-dev libcairo2-dev \
+          libsndfile1-dev \
+          ffmpeg
       
       - name: Install dependencies
         run: |
@@ -64,6 +66,7 @@ jobs:
           bash tests/run_tests.sh
 
   docker-build:
+    needs: run-tests
     runs-on: ubuntu-latest
     continue-on-error: false
 
