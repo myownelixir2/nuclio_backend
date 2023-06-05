@@ -45,7 +45,14 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
-
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y autoconf autogen automake build-essential libasound2-dev \
+          libflac-dev libogg-dev libtool libvorbis-dev libopus-dev libmp3lame-dev \
+          libmpg123-dev
+      
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
