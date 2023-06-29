@@ -7,7 +7,7 @@
 
 # About
 
-Hello there, music enthusiasts and code ninjas! 👋🎵 Welcome to Neucl.io - modern euclidean sequencer, an open-source project designed to empower the modern musician with the power of Python. This repository contains code for an API that generates Euclidean rhythms, providing a fresh take on music production and programming. 🎼💻
+Hello there, music enthusiasts and code ninjas! 👋🎵 Welcome to ```Neucl.io``` - modern euclidean sequencer, an open-source project designed to empower the modern musician with the power of Python. This repository contains code for an API that generates Euclidean rhythms, providing a fresh take on music production and programming. 🎼💻
 
 
 ## Euclidean Rhythms: Mathematics Meets Music 🎼📐
@@ -20,8 +20,8 @@ Euclidean rhythms are an intriguing way we leverage mathematical algorithms to c
 ## Supercharging Your Music Production Workflow 🖥️🎹
 ``Neucl.io`` is your personal maestro in music automation, covering tasks from sample research to pattern arrangement. Here's how Neucl.io changes the game:
 
-- Automated Efficiency: Wave goodbye to manual labor. With Neucl.io, you're all about automated music production. 🤖🎧
-- Quick Searches: Zip through your sample library, finding the perfect sound has never been faster. 🚀🎼
+- Automated Efficiency: Wave goodbye to manual labor. With ```Neucl.io```, you're all about automated music idea generations. 🤖🎧
+- Quick Iterations: Random selector, zips through your sample library in no time, finding the perfect sounds for your pattern. 🚀🎼
 - Auto-Generate & Arrange: Craft and arrange rhythmic sequences automatically. Let the creativity flow! 🧩🎹
 - Skyrocketing Output: Boost your creative output by 100x. It's your time to shine. 💥🎵
 
@@ -29,15 +29,27 @@ Euclidean rhythms are an intriguing way we leverage mathematical algorithms to c
 ## How Does It Work? 🤔💡
 Neucl.io transforms your music production workflow in just a few straightforward steps:
 
-- Query and Pull Samples: Neucl.io dives into your sample library, swiftly pulling out 6 samples based on your specifics - be it Kicks, Snares, Tops, Claps, Hi-hats, or Bass. You name it, ```Neucl.io``` retrieves it. 🗄️🎵
+- Query and Pull Samples: Neucl.io dives into your sample library, swiftly pulling out 6 random samples based on your specifics - be it Kicks, Snares, Tops, Claps, Hi-hats, or Bass. You name it, ```Neucl.io``` retrieves it. 🗄️🎵
 
-- Generate Rhythms and Sequences: Your chosen samples are masterfully arranged into a unique Euclidean rhythm, forming a seamless sequence. Your beat starts to take shape. 🥁🎚️
+- Generate Rhythms and Sequences: From your selected samples, the app generates unique Euclidean rhythm for each track, forming a seamless sequence. Your beat starts to take shape. 🥁🎚️
 
 - Add Variations and Effects: ```Neucl.io``` brings life to your beat with instant variations and effects, adding that unique touch to your sound. 🎛️⚡
 
 - Save and Iterate: Once your creation is complete, ```Neucl.io``` instantly saves it to the cloud. Safe and secure, you're free to move onto the next beat without a hitch. 🌐🔄
 
-Time to unleash your creative beast with Neucl.io! 🧠🔥🎼
+## Embrace the Chaos 🎶🌌
+
+- Unpredictability is Your Muse 🎭: In music creation, randomness is a dance with the unpredictable. It's about surrendering control and letting the unexpected take the lead.
+
+- Set Your Sonic Vision 🧭: Your imagination is your compass. Navigate through the soundscape of the unforeseen and discover unexpected melodies and harmonies.
+
+- Break Free 🚀: Step out of the familiar grooves of your musical reality. Let randomness recalibrate your creative process and lead you on an exhilarating adventure.
+
+- Power of Happy Accidents 🎉: Every 'mistake' is a potential masterpiece, every unexpected note a chance for a new harmony. Find beauty in discord, rhythm in noise, and music in chaos.
+
+Embrace the chaos, tune into the frequency of the unexpected, and let the Symphony of Serendipity begin! 🎵🌠
+
+Time to unleash your creative beast with ```Neucl.io```! 🧠🔥🎼
 
 🎵🎶🎵🎶🎵🎶🎵🎶🎵🎶🎵
 
@@ -55,6 +67,10 @@ You will need the following software installed:
 - Python 3.8+
 - Pip
 - Virtualenv (optional but recommended)
+- Docker
+- S3 bucket (AWS, Google Cloud, Azure, Minio, Wasabi etc)
+- Postgress data base (local or serverless)
+- Firebase account, learn how to set it up [here](https://firebase.google.com/docs/web/setup) (do not worry, it's free)
 
 ### Installation
 1. Clone the repository
@@ -103,7 +119,8 @@ The API will be running at http://localhost:8000.
 
 Head to ```/example``` folder on how to interact with API in stand alone mode. Follow steps in ```/example/example.ipynb```
 
-
+## ⚠️ Under Development!
+This project is under active development and may still have issues. We appreciate your understanding and patience. If you encounter any problems, please first check the open issues. If your issue is not listed, kindly create a new issue detailing the error or problem you experienced. Thank you for your support!
 
 ## Contributing
 Please feel free to contribute to this project by submitting issues or pull requests.

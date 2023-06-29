@@ -1,0 +1,65 @@
+networks:
+  app-tier:
+    driver: bridge
+services:
+  minio:
+    image: minio/minio
+    command: server /data
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    environment:
+      - MINIO_ROOT_USER=minio-root-user
+      - MINIO_ROOT_PASSWORD=minio-root-password
+      - MINIO_NOTIFY_WEBHOOK_ENABLE_PRIMARY=on
+      - MINIO_NOTIFY_WEBHOOK_ENDPOINT_PRIMARY=http://docker.for.mac.localhost:56733/get_snapshot
+      - MINIO_NOTIFY_WEBHOOK_QUEUE_DIR=/home/events
+    command: "minio server --console-address :9001 /data"
+    volumes:
+      - /Volumes/DATA VAULT/MINIO_STORAGE:/data
+    networks:
+      - app-tier
+
+  minio_client:
+    networks:
+      - app-tier
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10;
+      /usr/bin/mc config host add minio http://minio:9000 minio-root-user minio-root-password;
+      /usr/bin/mc mb minio/sample-dump;
+      /usr/bin/mc mb minio/snapshot;
+      /usr/bin/mc policy set public minio/sample-dump;
+      /usr/bin/mc event add minio/sample-dump arn:minio:sqs::PRIMARY:webhook --event put,delete --suffix .mp3;
+      exit 0;
+      "
+  minio_event_listener:
+    container_name: minio_event_listener_fastapi_autobuild
+    image: docker1private0ps/minio_event_listener_fastapi_autobuild:latest
+    networks:
+      - app-tier
+    ports:
+      - '56733:80'
+    environment:
+      - STORAGE_URL=http://docker.for.mac.localhost:9000
+      - STORAGE_KEY=minio-root-user
+      - STORAGE_SECRET=minio-root-password
+      - BUCKET_VAULT=sample-dump
+      - BUCKET_SNAP=snapshot
+
+  euclidoo_backend:
+    container_name: euclidoo_backend
+    image: docker1private0ps/euclidoo_backend:latest
+    networks:
+      - app-tier
+    ports:
+      - '8000:8000'
+    environment:
+      - STORAGE_URL=http://docker.for.mac.localhost:9000
+      - STORAGE_KEY=minio-root-user
+      - STORAGE_SECRET=minio-root-password
+      - BUCKET_VAULT=sample-dump
+      - BUCKET_SNAP=snapshot
