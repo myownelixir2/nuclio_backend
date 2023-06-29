@@ -119,7 +119,8 @@ The API will be running at http://localhost:8000.
 
 Head to ```/example``` folder on how to interact with API in stand alone mode. Follow steps in ```/example/example.ipynb```
 
-
+## ⚠️ Under Development!
+This project is under active development and may still have issues. We appreciate your understanding and patience. If you encounter any problems, please first check the open issues. If your issue is not listed, kindly create a new issue detailing the error or problem you experienced. Thank you for your support!
 
 ## Contributing
 Please feel free to contribute to this project by submitting issues or pull requests.
