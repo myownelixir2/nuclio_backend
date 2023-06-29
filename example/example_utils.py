@@ -234,13 +234,13 @@ class FileUtils:
         my_presigned_url = res.content.decode("utf-8")
         print(f"Downloading mixdown from {my_presigned_url}")
 
-        try:
-            urllib.request.urlretrieve(my_presigned_url, local_mixdown_job_path)
-        except HTTPError as e:
-            print(f"Failed to download mixdown: {e}")
-            return None
+        # try:
+        #     urllib.request.urlretrieve(my_presigned_url, local_mixdown_job_path)
+        # except HTTPError as e:
+        #     print(f"Failed to download mixdown: {e}")
+        #     return None
 
-        return local_mixdown_job_path
+        return local_mixdown_job_path, my_presigned_url
 
 
 def execute_concurrently(func, *args_list):
