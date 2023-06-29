@@ -18,16 +18,8 @@ class JobTypeValidator(BaseModel):
             following: "job_id_path", "processed_job_path", "asset_path",
             "mixdown_job_path", "mixdown_job_path_master", or "mixdown_job_path_pkl".
     """
-
-    job_type: Literal[
-        "job_id_path",
-        "processed_job_path",
-        "asset_path",
-        "mixdown_job_path",
-        "mixdown_job_path_master",
-        "mixdown_job_path_pkl",
-    ]
-
+    job_type: str
+    
     @validator("job_type")
     def job_type_validator(cls, v):
         if v not in [

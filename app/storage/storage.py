@@ -534,3 +534,7 @@ class SnapshotManager(StorageBase):
         except ClientError as e:
             self.logger.error(f"Error generating presigned urls: {e}")
             raise e
+
+
+
+
